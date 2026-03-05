@@ -1,4 +1,3 @@
-
 --[[
     ███╗   ██╗███████╗██╗  ██╗██╗   ██╗███████╗    ██╗   ██╗██╗
     ████╗  ██║██╔════╝╚██╗██╔╝██║   ██║██╔════╝    ██║   ██║██║
@@ -1541,7 +1540,7 @@ function NexusUI:CreateWindow(cfg)
                 Parent       = Track,
             }, {
                 New("UICorner",{CornerRadius=UDim.new(1,0)}),
-                New("UIDropShadowEffect" or "UIStroke",{}),
+                New("UIStroke", {Color = Color3.fromRGB(200,200,200), Thickness = 1}),
             })
 
             local val = tcfg.Default == true
