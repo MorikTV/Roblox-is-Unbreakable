@@ -831,15 +831,14 @@ function NexusUI:CreateWindow(cfg)
 
     local Topbar = New("Frame", {
         Name             = "Topbar",
-        Size             = UDim2.new(1, 0, 0, 48),
+        Size             = UDim2.new(1, 0, 0, 52),
         BackgroundColor3 = theme.Topbar,
         ClipsDescendants = false,
         ZIndex           = 5,
         Parent           = MainFrame,
     }, {
         New("UICorner",  {CornerRadius = UDim.new(0, 12)}),
-        -- bottom cover corners
-        New("Frame", {
+        New("Frame", { -- cover bottom round corners
             Size             = UDim2.new(1, 0, 0.5, 0),
             Position         = UDim2.new(0, 0, 0.5, 0),
             BackgroundColor3 = theme.Topbar,
@@ -854,70 +853,87 @@ function NexusUI:CreateWindow(cfg)
         }),
     })
 
-    -- Icon
-    local TitleIcon = New("ImageLabel", {
-        Name             = "Icon",
-        Image            = GetIcon(icon),
-        Size             = UDim2.new(0, 20, 0, 20),
-        Position         = UDim2.new(0, 14, 0.5, 0),
+    -- Icon badge (accent rounded square)
+    New("Frame", {
+        Size             = UDim2.new(0, 32, 0, 32),
+        Position         = UDim2.new(0, 12, 0.5, 0),
         AnchorPoint      = Vector2.new(0, 0.5),
-        BackgroundTransparency = 1,
-        ImageColor3      = theme.Accent,
+        BackgroundColor3 = theme.AccentDim,
+        BorderSizePixel  = 0,
         ZIndex           = 6,
         Parent           = Topbar,
+    }, {
+        New("UICorner", {CornerRadius = UDim.new(0, 8)}),
+        New("ImageLabel", {
+            Image            = GetIcon(icon),
+            Size             = UDim2.new(0, 18, 0, 18),
+            Position         = UDim2.new(0.5, 0, 0.5, 0),
+            AnchorPoint      = Vector2.new(0.5, 0.5),
+            BackgroundTransparency = 1,
+            ImageColor3      = theme.Accent,
+            ZIndex           = 7,
+        }),
     })
 
-    -- Title
-    local TitleLabel = New("TextLabel", {
+    -- Title + subtitle stacked block
+    local titleY = subtitle ~= "" and -9 or 0
+    New("TextLabel", {
         Name             = "Title",
         Text             = title,
         Font             = Enum.Font.GothamBold,
         TextSize         = 15,
         TextColor3       = theme.Text,
-        Size             = UDim2.new(0, 200, 0, 22),
-        Position         = UDim2.new(0, 40, 0.5, 0),
+        Size             = UDim2.new(0, 220, 0, 20),
+        Position         = UDim2.new(0, 52, 0.5, titleY),
         AnchorPoint      = Vector2.new(0, 0.5),
         BackgroundTransparency = 1,
         TextXAlignment   = Enum.TextXAlignment.Left,
         ZIndex           = 6,
         Parent           = Topbar,
     })
-
-    -- Subtitle
-    local SubLabel = New("TextLabel", {
-        Name             = "SubTitle",
-        Text             = subtitle,
-        Font             = Enum.Font.Gotham,
-        TextSize         = 11,
-        TextColor3       = theme.TextMuted,
-        Size             = UDim2.new(0, 200, 0, 14),
-        Position         = UDim2.new(0, 40, 0.5, 10),
-        AnchorPoint      = Vector2.new(0, 0),
-        BackgroundTransparency = 1,
-        TextXAlignment   = Enum.TextXAlignment.Left,
-        Visible          = subtitle ~= "",
-        ZIndex           = 6,
-        Parent           = Topbar,
-    })
     if subtitle ~= "" then
-        TitleLabel.Position = UDim2.new(0, 40, 0.5, -8)
-    end
-
-    -- Control buttons (right side)
-    local function MakeCtrlBtn(iconName, xOffset, callback)
-        local btn = New("ImageButton", {
-            Image            = GetIcon(iconName),
-            Size             = UDim2.new(0, 20, 0, 20),
-            Position         = UDim2.new(1, xOffset, 0.5, 0),
-            AnchorPoint      = Vector2.new(1, 0.5),
+        New("TextLabel", {
+            Name             = "SubTitle",
+            Text             = subtitle,
+            Font             = Enum.Font.Gotham,
+            TextSize         = 11,
+            TextColor3       = theme.TextMuted,
+            Size             = UDim2.new(0, 220, 0, 14),
+            Position         = UDim2.new(0, 52, 0.5, 11),
+            AnchorPoint      = Vector2.new(0, 0.5),
             BackgroundTransparency = 1,
-            ImageColor3      = theme.TextMuted,
+            TextXAlignment   = Enum.TextXAlignment.Left,
             ZIndex           = 6,
             Parent           = Topbar,
         })
-        btn.MouseEnter:Connect(function() Tween(btn, {ImageColor3=theme.Text}, 0.15) end)
-        btn.MouseLeave:Connect(function() Tween(btn, {ImageColor3=theme.TextMuted}, 0.15) end)
-        btn.MouseButton1Click:Connect(callback)
+    end
+
+    -- macOS-style control circles: red=close, yellow=minimize
+    local function MakeCircleBtn(color, xOff, iconName, cb)
+        local btn = New("TextButton", {
+            Size             = UDim2.new(0, 14, 0, 14),
+            Position         = UDim2.new(1, xOff, 0.5, 0),
+            AnchorPoint      = Vector2.new(1, 0.5),
+            BackgroundColor3 = color,
+            Text             = "",
+            AutoButtonColor  = false,
+            ZIndex           = 6,
+            Parent           = Topbar,
+        }, { New("UICorner", {CornerRadius = UDim.new(1, 0)}) })
+        local ico = New("ImageLabel", {
+            Image            = GetIcon(iconName),
+            Size             = UDim2.new(0, 8, 0, 8),
+            Position         = UDim2.new(0.5, 0, 0.5, 0),
+            AnchorPoint      = Vector2.new(0.5, 0.5),
+            BackgroundTransparency = 1,
+            ImageColor3      = Color3.fromRGB(80, 30, 20),
+            ImageTransparency= 1,
+            ZIndex           = 7,
+            Parent           = btn,
+        })
+        btn.MouseEnter:Connect(function() Tween(ico,{ImageTransparency=0},0.1) end)
+        btn.MouseLeave:Connect(function() Tween(ico,{ImageTransparency=1},0.1) end)
+        btn.MouseButton1Click:Connect(cb)
         return btn
     end
 
@@ -925,8 +941,8 @@ function NexusUI:CreateWindow(cfg)
     local searchOpen = false
     local SearchBar = New("Frame", {
         Name             = "SearchBar",
-        Size             = UDim2.new(0, 200, 0, 30),
-        Position         = UDim2.new(1, -100, 0.5, 0),
+        Size             = UDim2.new(0, 190, 0, 28),
+        Position         = UDim2.new(0.5, -20, 0.5, 0),
         AnchorPoint      = Vector2.new(0.5, 0.5),
         BackgroundColor3 = theme.InputBg,
         BorderSizePixel  = 0,
@@ -938,10 +954,10 @@ function NexusUI:CreateWindow(cfg)
         New("UIStroke", {Color=theme.Border}),
         New("TextBox", {
             Name             = "Input",
-            Size             = UDim2.new(1,-36,1,0),
-            Position         = UDim2.new(0,30,0,0),
+            Size             = UDim2.new(1,-32,1,0),
+            Position         = UDim2.new(0,28,0,0),
             BackgroundTransparency=1,
-            PlaceholderText  = "Search elements...",
+            PlaceholderText  = "Search...",
             PlaceholderColor3= theme.TextDisabled,
             Font             = Enum.Font.Gotham,
             TextSize         = 13,
@@ -951,7 +967,7 @@ function NexusUI:CreateWindow(cfg)
         }),
         New("ImageLabel", {
             Image            = GetIcon("search"),
-            Size             = UDim2.new(0,14,0,14),
+            Size             = UDim2.new(0,13,0,13),
             Position         = UDim2.new(0,8,0.5,0),
             AnchorPoint      = Vector2.new(0,0.5),
             BackgroundTransparency=1,
@@ -959,45 +975,56 @@ function NexusUI:CreateWindow(cfg)
             ZIndex           = 8,
         }),
     })
-
     local SearchInput = SearchBar.Input
 
-    MakeCtrlBtn("search", -48, function()
+    -- Search icon button
+    local searchIco = New("ImageButton", {
+        Image            = GetIcon("search"),
+        Size             = UDim2.new(0, 16, 0, 16),
+        Position         = UDim2.new(1, -46, 0.5, 0),
+        AnchorPoint      = Vector2.new(1, 0.5),
+        BackgroundTransparency = 1,
+        ImageColor3      = theme.TextMuted,
+        ZIndex           = 6,
+        Parent           = Topbar,
+    })
+    searchIco.MouseEnter:Connect(function() Tween(searchIco,{ImageColor3=theme.Text},0.15) end)
+    searchIco.MouseLeave:Connect(function() Tween(searchIco,{ImageColor3=theme.TextMuted},0.15) end)
+    searchIco.MouseButton1Click:Connect(function()
         searchOpen = not searchOpen
         SearchBar.Visible = searchOpen
-        if searchOpen then
-            SearchInput:CaptureFocus()
-        else
-            SearchInput.Text = ""
-        end
+        if searchOpen then SearchInput:CaptureFocus() else SearchInput.Text = "" end
     end)
 
-    -- Minimize button
-    local minimizeBtn = MakeCtrlBtn("minimize", -24, function()
+    -- Minimize (yellow circle)
+    MakeCircleBtn(Color3.fromRGB(255, 189, 46), -26, "minus", function()
         if isMinimized then
             isMinimized = false
-            Tween(MainFrame, {Size=UDim2.new(0,620,0,420)}, 0.35)
-            task.wait(0.1)
             for _, c in ipairs(MainFrame:GetChildren()) do
-                if c.Name ~= "Topbar" then c.Visible = true end
+                if c ~= Topbar then c.Visible = true end
             end
+            Tween(MainFrame, {Size = UDim2.new(0, 620, 0, 420)}, 0.3, Enum.EasingStyle.Quint)
         else
             isMinimized = true
-            for _, c in ipairs(MainFrame:GetChildren()) do
-                if c.Name ~= "Topbar" then c.Visible = false end
-            end
-            Tween(MainFrame, {Size=UDim2.new(0,620,0,48)}, 0.35)
+            Tween(MainFrame, {Size = UDim2.new(0, 620, 0, 52)}, 0.3, Enum.EasingStyle.Quint)
+            task.delay(0.32, function()
+                if isMinimized then
+                    for _, c in ipairs(MainFrame:GetChildren()) do
+                        if c ~= Topbar then c.Visible = false end
+                    end
+                end
+            end)
         end
     end)
 
-    -- Close/hide button
-    MakeCtrlBtn("close", -4, function()
+    -- Close/hide (red circle)
+    MakeCircleBtn(Color3.fromRGB(255, 96, 92), -10, "x", function()
         isHidden = true
-        Tween(MainFrame, {Size=UDim2.new(0,0,0,0), BackgroundTransparency=1}, 0.35)
-        Tween(Shadow,    {ImageTransparency=1}, 0.35)
+        Tween(MainFrame, {Size=UDim2.new(0,0,0,0), BackgroundTransparency=1}, 0.3)
+        Tween(Shadow,    {ImageTransparency=1}, 0.3)
         NexusUI:Notify({
             Title   = "UI Hidden",
-            Content = "Press " .. (hideKey or "RightShift") .. " to show the UI again.",
+            Content = "Press " .. (hideKey and tostring(hideKey) or "RightShift") .. " to show the UI again.",
             Duration = 6,
             Icon    = "eye",
         })
@@ -1032,8 +1059,8 @@ function NexusUI:CreateWindow(cfg)
 
     local TabBar = New("Frame", {
         Name             = "TabBar",
-        Size             = UDim2.new(0, 148, 1, -48),
-        Position         = UDim2.new(0, 0, 0, 48),
+        Size             = UDim2.new(0, 148, 1, -52),
+        Position         = UDim2.new(0, 0, 0, 52),
         BackgroundColor3 = theme.Surface,
         BorderSizePixel  = 0,
         ClipsDescendants = true,
@@ -1076,8 +1103,8 @@ function NexusUI:CreateWindow(cfg)
 
     local ContentHolder = New("Frame", {
         Name             = "ContentHolder",
-        Size             = UDim2.new(1, -148, 1, -48),
-        Position         = UDim2.new(0, 148, 0, 48),
+        Size             = UDim2.new(1, -148, 1, -52),
+        Position         = UDim2.new(0, 148, 0, 52),
         BackgroundTransparency = 1,
         ClipsDescendants = true,
         Parent           = MainFrame,
@@ -1686,160 +1713,274 @@ function NexusUI:CreateWindow(cfg)
         -- ── Dropdown ─────────────────────────────────────────────────────────
 
         function tabObj:CreateDropdown(dcfg)
+            dcfg = dcfg or {}
             local hasDesc = dcfg.Description and dcfg.Description ~= ""
-            local frame   = New("Frame", {
-                Name             = dcfg.Name,
-                Size             = UDim2.new(1, 0, 0, hasDesc and 52 or 42),
+            local baseH   = hasDesc and 52 or 42
+            local multi   = dcfg.MultiSelect or false
+            local opts    = dcfg.Options or {}
+
+            -- current value
+            local curOpts
+            if multi then
+                curOpts = type(dcfg.Default) == "table" and dcfg.Default
+                          or (dcfg.Default and {dcfg.Default} or {})
+            else
+                curOpts = type(dcfg.Default) == "string" and dcfg.Default
+                          or (opts[1] or "")
+            end
+
+            local frame = New("Frame", {
+                Name             = dcfg.Name or "Dropdown",
+                Size             = UDim2.new(1, 0, 0, baseH),
                 BackgroundColor3 = theme.Surface,
                 BorderSizePixel  = 0,
                 LayoutOrder      = #Page:GetChildren(),
-                ClipsDescendants = true,
+                ClipsDescendants = false,
                 Parent           = Page,
             }, {
-                New("UICorner",  {CornerRadius=UDim.new(0,8)}),
-                New("UIStroke",  {Color=theme.Border, Thickness=1}),
+                New("UICorner", {CornerRadius = UDim.new(0, 8)}),
+                New("UIStroke", {Color = theme.Border, Thickness = 1}),
             })
 
             ElemTitle(frame, dcfg.Name, dcfg.Description)
 
-            local multi   = dcfg.MultiSelect or false
-            local opts    = dcfg.Options or {}
-            local defVal  = dcfg.Default
+            -- Selected value label
+            local selLabel = New("TextLabel", {
+                Font             = Enum.Font.Gotham,
+                TextSize         = 12,
+                TextColor3       = theme.TextMuted,
+                Size             = UDim2.new(0, 110, 0, 18),
+                Position         = UDim2.new(1, -134, 0.5, 0),
+                AnchorPoint      = Vector2.new(0, 0.5),
+                BackgroundTransparency = 1,
+                TextXAlignment   = Enum.TextXAlignment.Right,
+                TextTruncate     = Enum.TextTruncate.AtEnd,
+                Parent           = frame,
+            })
 
-            local curOpts -- table (multi) or string
-            if multi then
-                curOpts = type(defVal) == "table" and defVal or (defVal and {defVal} or {})
-            else
-                curOpts = type(defVal) == "string" and defVal or (type(opts[1]) == "string" and opts[1]) or ""
-            end
+            -- Chevron arrow
+            local chevron = New("ImageLabel", {
+                Image            = GetIcon("chevrondown"),
+                Size             = UDim2.new(0, 14, 0, 14),
+                Position         = UDim2.new(1, -18, 0.5, 0),
+                AnchorPoint      = Vector2.new(0.5, 0.5),
+                BackgroundTransparency = 1,
+                ImageColor3      = theme.TextMuted,
+                Parent           = frame,
+            })
+
+            local dropObj = {Type = "Dropdown", Value = curOpts}
+            local isOpen  = false
 
             local function DisplayText()
                 if multi then
                     if #curOpts == 0 then return "None"
                     elseif #curOpts == 1 then return curOpts[1]
-                    else return #curOpts.." selected" end
-                else return curOpts == "" and "None" or curOpts end
-            end
-
-            local selLabel = New("TextLabel", {
-                Font         = Enum.Font.Gotham,
-                TextSize     = 13,
-                TextColor3   = theme.TextMuted,
-                Size         = UDim2.new(0, 120, 0, 20),
-                Position     = UDim2.new(1, -160, 0.5, 0),
-                AnchorPoint  = Vector2.new(0, 0.5),
-                BackgroundTransparency=1,
-                TextXAlignment = Enum.TextXAlignment.Right,
-                Text         = DisplayText(),
-                Parent       = frame,
-            })
-
-            local chevron = New("ImageLabel", {
-                Image        = GetIcon("chevrondown"),
-                Size         = UDim2.new(0,16,0,16),
-                Position     = UDim2.new(1,-26,0.5,0),
-                AnchorPoint  = Vector2.new(0.5,0.5),
-                BackgroundTransparency=1,
-                ImageColor3  = theme.TextMuted,
-                Parent       = frame,
-            })
-
-            local openH = hasDesc and 52 or 42
-            local baseH = openH
-            local isOpen = false
-            local listFrame = New("Frame", {
-                Size         = UDim2.new(1,-28,0,0),
-                Position     = UDim2.new(0,14,0,baseH+4),
-                BackgroundTransparency=1,
-                ClipsDescendants=true,
-                Parent       = frame,
-            }, {
-                New("UIListLayout",{Padding=UDim.new(0,4)}),
-            })
-
-            local dropObj = {Type="Dropdown", Value=curOpts}
-
-            local function UpdateOpts()
-                selLabel.Text = DisplayText()
-                dropObj.Value = curOpts
-                if dcfg.Callback then
-                    pcall(dcfg.Callback, multi and curOpts or curOpts)
+                    else return #curOpts .. " selected" end
+                else
+                    return (curOpts == "" or curOpts == nil) and "None" or tostring(curOpts)
                 end
-                if Window._configEnabled then Window._saveAll() end
             end
 
+            local function RefreshLabel()
+                selLabel.Text  = DisplayText()
+                dropObj.Value  = curOpts
+            end
+            RefreshLabel()
+
+            -- Floating dropdown list — parented to ScreenGui so it renders above everything
+            local listPanel = New("Frame", {
+                Name             = "DropList_" .. (dcfg.Name or ""),
+                Size             = UDim2.new(0, 0, 0, 0), -- set dynamically
+                BackgroundColor3 = theme.Elevated,
+                BorderSizePixel  = 0,
+                ZIndex           = 50,
+                Visible          = false,
+                Parent           = ScreenGui,
+            }, {
+                New("UICorner",  {CornerRadius = UDim.new(0, 8)}),
+                New("UIStroke",  {Color = theme.Border, Thickness = 1}),
+            })
+
+            local listScroll = New("ScrollingFrame", {
+                Size                 = UDim2.new(1, 0, 1, 0),
+                BackgroundTransparency = 1,
+                BorderSizePixel      = 0,
+                ScrollBarThickness   = 3,
+                ScrollBarImageColor3 = theme.ScrollBar,
+                CanvasSize           = UDim2.new(0, 0, 0, 0),
+                AutomaticCanvasSize  = Enum.AutomaticSize.Y,
+                ClipsDescendants     = true,
+                ZIndex               = 50,
+                Parent               = listPanel,
+            }, {
+                New("UIListLayout",  {Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder}),
+                New("UIPadding",     {PaddingLeft=UDim.new(0,6),PaddingRight=UDim.new(0,6),PaddingTop=UDim.new(0,6),PaddingBottom=UDim.new(0,6)}),
+            })
+
+            -- Position panel below the frame on screen
+            local function PositionPanel()
+                local absPos  = frame.AbsolutePosition
+                local absSize = frame.AbsoluteSize
+                local itemH   = 34
+                local padV    = 12
+                local count   = #opts
+                local listH   = math.min(count * (itemH + 3) + padV, 200)
+                local panelW  = absSize.X
+
+                listPanel.Size     = UDim2.new(0, panelW, 0, listH)
+                listPanel.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 4)
+            end
+
+            -- Rebuild option rows
             local function BuildList()
-                for _, c in ipairs(listFrame:GetChildren()) do
+                for _, c in ipairs(listScroll:GetChildren()) do
                     if c:IsA("Frame") then c:Destroy() end
                 end
-                for _, opt in ipairs(opts) do
-                    local isSelected = multi and table.find(curOpts, opt) ~= nil or curOpts == opt
-                    local optFrame = New("Frame", {
-                        Name         = opt,
-                        Size         = UDim2.new(1,0,0,32),
-                        BackgroundColor3 = isSelected and theme.AccentDim or theme.SurfaceHover,
+                for i, opt in ipairs(opts) do
+                    local isSel = multi and (table.find(curOpts, opt) ~= nil) or (curOpts == opt)
+                    local row = New("Frame", {
+                        Name             = tostring(opt),
+                        Size             = UDim2.new(1, 0, 0, 34),
+                        BackgroundColor3 = isSel and theme.AccentDim or theme.Surface,
                         BorderSizePixel  = 0,
+                        LayoutOrder      = i,
+                        ZIndex           = 51,
                     }, {
-                        New("UICorner",{CornerRadius=UDim.new(0,6)}),
-                        New("UIStroke",{Color = isSelected and theme.Accent or theme.Border, Thickness=1}),
-                        New("TextLabel",{
-                            Text=opt, Font=Enum.Font.GothamSemibold, TextSize=13,
-                            TextColor3=isSelected and theme.Accent or theme.Text,
-                            Size=UDim2.new(1,-40,1,0), Position=UDim2.new(0,12,0,0),
-                            BackgroundTransparency=1, TextXAlignment=Enum.TextXAlignment.Left,
-                        }),
-                        New("ImageLabel",{
-                            Image=GetIcon("check"),
-                            Size=UDim2.new(0,14,0,14), Position=UDim2.new(1,-22,0.5,0), AnchorPoint=Vector2.new(0.5,0.5),
-                            BackgroundTransparency=1, ImageColor3=theme.Accent,
-                            Visible=isSelected,
-                        }),
+                        New("UICorner", {CornerRadius = UDim.new(0, 6)}),
                     })
-                    optFrame.Parent = listFrame
-
-                    New("TextButton", {Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text="",ZIndex=3,Parent=optFrame})
-                        .MouseButton1Click:Connect(function()
+                    if isSel then
+                        New("UIStroke", {Color = theme.Accent, Thickness = 1, Parent = row})
+                    end
+                    New("TextLabel", {
+                        Text             = tostring(opt),
+                        Font             = Enum.Font.GothamSemibold,
+                        TextSize         = 13,
+                        TextColor3       = isSel and theme.Accent or theme.Text,
+                        Size             = UDim2.new(1, -38, 1, 0),
+                        Position         = UDim2.new(0, 10, 0, 0),
+                        BackgroundTransparency = 1,
+                        TextXAlignment   = Enum.TextXAlignment.Left,
+                        ZIndex           = 52,
+                        Parent           = row,
+                    })
+                    if isSel then
+                        New("ImageLabel", {
+                            Image            = GetIcon("check"),
+                            Size             = UDim2.new(0, 13, 0, 13),
+                            Position         = UDim2.new(1, -22, 0.5, 0),
+                            AnchorPoint      = Vector2.new(0.5, 0.5),
+                            BackgroundTransparency = 1,
+                            ImageColor3      = theme.Accent,
+                            ZIndex           = 52,
+                            Parent           = row,
+                        })
+                    end
+                    -- click handler
+                    local hitbox = New("TextButton", {
+                        Size             = UDim2.new(1, 0, 1, 0),
+                        BackgroundTransparency = 1,
+                        Text             = "",
+                        ZIndex           = 53,
+                        Parent           = row,
+                    })
+                    hitbox.MouseEnter:Connect(function()
+                        if not isSel then
+                            Tween(row, {BackgroundColor3 = theme.SurfaceHover}, 0.1)
+                        end
+                    end)
+                    hitbox.MouseLeave:Connect(function()
+                        if not isSel then
+                            Tween(row, {BackgroundColor3 = theme.Surface}, 0.1)
+                        end
+                    end)
+                    hitbox.MouseButton1Click:Connect(function()
                         if multi then
                             local idx = table.find(curOpts, opt)
                             if idx then table.remove(curOpts, idx)
                             else table.insert(curOpts, opt) end
+                            RefreshLabel()
+                            BuildList()
+                            if dcfg.Callback then pcall(dcfg.Callback, curOpts) end
+                            if Window._configEnabled then Window._saveAll() end
                         else
                             curOpts = opt
-                            -- close
+                            RefreshLabel()
+                            BuildList()
+                            if dcfg.Callback then pcall(dcfg.Callback, curOpts) end
+                            if Window._configEnabled then Window._saveAll() end
+                            -- close on single select
                             isOpen = false
-                            Tween(frame, {Size=UDim2.new(1,0,0,baseH)}, 0.25)
-                            Tween(chevron, {Rotation=0}, 0.2)
+                            listPanel.Visible = false
+                            Tween(chevron, {Rotation = 0, ImageColor3 = theme.TextMuted}, 0.2)
                         end
-                        UpdateOpts()
-                        BuildList()
                     end)
+                    row.Parent = listScroll
                 end
             end
             BuildList()
 
+            -- Toggle open/close
             local toggleBtn = New("TextButton", {
-                Size=UDim2.new(1,0,0,baseH), BackgroundTransparency=1, Text="", ZIndex=4, Parent=frame
+                Size             = UDim2.new(1, 0, 1, 0),
+                BackgroundTransparency = 1,
+                Text             = "",
+                ZIndex           = 4,
+                Parent           = frame,
             })
+
+            local function OpenDropdown()
+                isOpen = true
+                BuildList()
+                PositionPanel()
+                listPanel.Visible = true
+                Tween(chevron, {Rotation = 180, ImageColor3 = theme.Accent}, 0.2)
+                Tween(frame, {BackgroundColor3 = theme.SurfaceHover}, 0.15)
+            end
+
+            local function CloseDropdown()
+                isOpen = false
+                listPanel.Visible = false
+                Tween(chevron, {Rotation = 0, ImageColor3 = theme.TextMuted}, 0.2)
+                Tween(frame, {BackgroundColor3 = theme.Surface}, 0.15)
+            end
+
             toggleBtn.MouseButton1Click:Connect(function()
-                isOpen = not isOpen
-                local listH = math.min(#opts * 36, 150)
-                Tween(frame, {Size=UDim2.new(1,0,0, isOpen and baseH+listH+8 or baseH)}, 0.3)
-                Tween(chevron, {Rotation = isOpen and 180 or 0}, 0.25)
-                if isOpen then BuildList() end
+                if isOpen then CloseDropdown() else OpenDropdown() end
             end)
-            toggleBtn.MouseEnter:Connect(function() Tween(frame,{BackgroundColor3=theme.SurfaceHover},0.15) end)
-            toggleBtn.MouseLeave:Connect(function() Tween(frame,{BackgroundColor3=theme.Surface},0.15) end)
+
+            -- Close when clicking outside
+            UserInputService.InputBegan:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                    if isOpen then
+                        local mx, my = inp.Position.X, inp.Position.Y
+                        local pp = listPanel.AbsolutePosition
+                        local ps = listPanel.AbsoluteSize
+                        local fp = frame.AbsolutePosition
+                        local fs = frame.AbsoluteSize
+                        local inList  = mx >= pp.X and mx <= pp.X+ps.X and my >= pp.Y and my <= pp.Y+ps.Y
+                        local inFrame = mx >= fp.X and mx <= fp.X+fs.X and my >= fp.Y and my <= fp.Y+fs.Y
+                        if not inList and not inFrame then
+                            CloseDropdown()
+                        end
+                    end
+                end
+            end)
 
             function dropObj:Set(val)
                 if multi then
-                    curOpts = type(val)=="table" and val or {val}
-                else curOpts = val end
-                UpdateOpts(); BuildList()
+                    curOpts = type(val) == "table" and val or {val}
+                else
+                    curOpts = val
+                end
+                RefreshLabel()
+                BuildList()
             end
             function dropObj:Refresh(newOpts)
                 opts = newOpts
                 BuildList()
             end
+            function dropObj:Close() CloseDropdown() end
 
             if dcfg.Flag then NexusUI.Flags[dcfg.Flag] = dropObj end
             return dropObj
