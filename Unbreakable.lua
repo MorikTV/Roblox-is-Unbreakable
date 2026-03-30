@@ -5,7 +5,7 @@
 --local syn = getgenv().syn
 --getgenv().syn = false
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/MorikTV/Roblox-is-Unbreakable/refs/heads/main/source.lua", true))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/MorikTV/Roblox-is-Unbreakable/refs/heads/main/paid.lua", true))()
 
 --getgenv().syn = syn
 
