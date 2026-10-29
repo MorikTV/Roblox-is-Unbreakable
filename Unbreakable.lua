@@ -511,6 +511,106 @@ getgenv().TEXT.pl = {
     status_starting="Rozpoczynanie — metoda: %s",status_done="Gotowe — skin: %s",status_stopped="Zatrzymano.",
 }
 
+-- Automatically patch Discord handle to "morik_yt." and add Premium Preview localization keys across all 12 languages
+local PREMIUM_LOCALE = {
+    en = {
+        prem_banner_title    = "Premium Status",
+        prem_banner_unlocked = "Premium Active! All Mob Farm & Outfit Changer features are unlocked.",
+        prem_banner_locked   = "PREVIEW MODE: These features are visible for preview only. Unlock Premium for just $1 in Discord (%s)!",
+        prem_locked_title    = "Premium Feature Locked",
+        prem_locked_desc     = "Unlock Mob Farm & Outfit Changer for $1! Contact %s on Discord.",
+    },
+    ru = {
+        prem_banner_title    = "Статус Premium",
+        prem_banner_unlocked = "Premium активен! Все функции фарма мобов и смены одежды разблокированы.",
+        prem_banner_locked   = "РЕЖИМ ПРОСМОТРА: Вы можете просматривать функции, но для использования нужен Premium ($1). Купить в Discord: %s",
+        prem_locked_title    = "Доступно только в Premium",
+        prem_locked_desc     = "Разблокируй Фарм Мобов и Одежду всего за $1! Пиши в Discord: %s",
+    },
+    de = {
+        prem_banner_title    = "Premium-Status",
+        prem_banner_unlocked = "Premium aktiv! Alle Funktionen sind freigeschaltet.",
+        prem_banner_locked   = "VORSCHAU-MODUS: Nur zur Ansicht. Schalte Premium für $1 auf Discord (%s) frei!",
+        prem_locked_title    = "Premium-Funktion gesperrt",
+        prem_locked_desc     = "Schalte Mob-Farm & Outfit für $1 frei! Discord: %s",
+    },
+    fr = {
+        prem_banner_title    = "Statut Premium",
+        prem_banner_unlocked = "Premium actif ! Toutes les fonctionnalités sont débloquées.",
+        prem_banner_locked   = "MODE APERÇU : Débloquez la version Premium pour seulement 1$ sur Discord (%s) !",
+        prem_locked_title    = "Fonction Premium verrouillée",
+        prem_locked_desc     = "Débloquez Mob Farm & Tenues pour 1$ ! Discord : %s",
+    },
+    es = {
+        prem_banner_title    = "Estado Premium",
+        prem_banner_unlocked = "¡Premium activo! Todas las funciones están desbloqueadas.",
+        prem_banner_locked   = "MODO VISTA PREVIA: ¡Desbloquea Premium por solo $1 en Discord (%s)!",
+        prem_locked_title    = "Función Premium bloqueada",
+        prem_locked_desc     = "¡Desbloquea Mob Farm y Atuendos por $1! Discord: %s",
+    },
+    pt = {
+        prem_banner_title    = "Status Premium",
+        prem_banner_unlocked = "Premium ativo! Todos os recursos estão desbloqueados.",
+        prem_banner_locked   = "MODO DE VISUALIZAÇÃO: Desbloqueie o Premium por apenas $1 no Discord (%s)!",
+        prem_locked_title    = "Recurso Premium bloqueado",
+        prem_locked_desc     = "Desbloqueie Mob Farm e Roupas por $1! Discord: %s",
+    },
+    tr = {
+        prem_banner_title    = "Premium Durumu",
+        prem_banner_unlocked = "Premium Aktif! Tüm özelliklerin kilidi açıldı.",
+        prem_banner_locked   = "ÖNİZLEME MODU: Sadece $1 karşılığında Discord üzerinden (%s) Premium'u açın!",
+        prem_locked_title    = "Premium Özellik Kilitli",
+        prem_locked_desc     = "Mob Farm ve Kıyafetleri $1'a açın! Discord: %s",
+    },
+    ja = {
+        prem_banner_title    = "プレミアムステータス",
+        prem_banner_unlocked = "プレミアム有効！すべての機能がアンロックされています。",
+        prem_banner_locked   = "プレビューモード：Discord (%s) でわずか$1でプレミアムを解除できます！",
+        prem_locked_title    = "プレミアム限定機能",
+        prem_locked_desc     = "$1でモブファームと衣装機能を解除！ Discord: %s",
+    },
+    ko = {
+        prem_banner_title    = "프리미엄 상태",
+        prem_banner_unlocked = "프리미엄 활성화됨! 모든 기능이 잠금 해제되었습니다.",
+        prem_banner_locked   = "미리보기 모드: Discord(%s)에서 단 $1로 프리미엄을 잠금 해제하세요!",
+        prem_locked_title    = "프리미엄 기능 잠김",
+        prem_locked_desc     = "$1로 몹 파밍 및 의상 기능을 해제하세요! Discord: %s",
+    },
+    zh = {
+        prem_banner_title    = "高级版状态",
+        prem_banner_unlocked = "高级版已激活！所有功能均已解锁。",
+        prem_banner_locked   = "预览模式：仅需 $1 即可在 Discord (%s) 解锁高级版功能！",
+        prem_locked_title    = "高级版功能已锁定",
+        prem_locked_desc     = "仅需 $1 解锁怪物农场与换装！Discord: %s",
+    },
+    ar = {
+        prem_banner_title    = "حالة البريميوم",
+        prem_banner_unlocked = "البريميوم مفعل! جميع الميزات مفتوحة.",
+        prem_banner_locked   = "وضع المعاينة: افتح النسخة المميزة مقابل 1$ فقط عبر ديسكورد (%s)!",
+        prem_locked_title    = "ميزة بريميوم مقفلة",
+        prem_locked_desc     = "افتح زراعة المخلوقات والملابس بـ 1$! ديسكورد: %s",
+    },
+    pl = {
+        prem_banner_title    = "Status Premium",
+        prem_banner_unlocked = "Premium aktywne! Wszystkie funkcje są odblokowane.",
+        prem_banner_locked   = "TRYB PODGLĄDU: Odblokuj Premium za jedyne $1 na Discordzie (%s)!",
+        prem_locked_title    = "Funkcja Premium zablokowana",
+        prem_locked_desc     = "Odblokuj Mob Farm i Stroje za $1! Discord: %s",
+    }
+}
+
+for langCode, pack in pairs(getgenv().TEXT) do
+    for k, v in pairs(pack) do
+        if type(v) == "string" then
+            pack[k] = v:gsub("morik_yt", "morik_yt."):gsub("morik_yt..", "morik_yt.")
+        end
+    end
+    local extra = PREMIUM_LOCALE[langCode] or PREMIUM_LOCALE.en
+    for k, v in pairs(extra) do
+        pack[k] = v
+    end
+end
+
 loadstring(game:HttpGet("https://raw.githubusercontent.com/MorikTV/Roblox-is-Unbreakable/refs/heads/main/paid.lua", true))()
 
 --getgenv().syn = syn
