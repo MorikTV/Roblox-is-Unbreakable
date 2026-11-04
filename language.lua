@@ -2,7 +2,7 @@ getgenv().TEXT = {}
 
 getgenv().TEXT.en = {
     window_name="Roblox is Unbreakable | @morik_yt v%s",loading_title="Roblox is Unbreakable",loading_subtitle="by morik_yt",
-    tab_home="Home",tab_teleports="Teleports",tab_farm="Farm",tab_skin="Skin Farm",tab_sell="Auto Sell",tab_mob="Mob Farm",tab_outfit="Outfit",tab_sbr="SBR",
+    tab_home="Home",tab_teleports="Teleports",tab_farm="Farm",tab_skin="Skin Farm",tab_sell="Auto Sell",tab_mob="Mob Farm",tab_outfit="Outfit",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="Language",sec_info="Information",sec_movement="Movement",sec_misc="Misc",sec_app="App",sec_chest="Chest Farm",sec_meteorite="Meteorite Farm",
     sec_skin_sel="Skin Selection",sec_farm_settings="Farm Settings",sec_farm_control="Farm Control",sec_auto_buy="Auto Buy",
     sec_target="Target Selection",sec_move_settings="Movement Settings",sec_attack="Attack Settings",sec_farm="Farm",
@@ -40,11 +40,13 @@ getgenv().TEXT.en = {
     status_building_pity="Building pity: %.1f%% / %.1f%% (Arrow only)",status_phase1_ge="Phase 1/2 — rolling Arrow for Gold Experience...",status_phase2_req="Phase 2/2 — using Requiem Arrow on Gold Experience...",
     status_phase1_ws="Phase 1/2 — rolling Arrow for Whitesnake...",status_phase2_gb="Phase 2/2 — merging Green Baby into Whitesnake...",status_remove_first="Stopped — remove your stand/skin first.",
     status_starting="Starting — method: %s",status_done="Done — got target skin: %s",status_stopped="Stopped.",
+    hw_info_title="Important Information",hw_info_text="It is highly recommended to use the Halloween farm on a PRIVATE SERVER to avoid getting reported and to maximize efficiency. This farm automatically collects Wisps, Pumpkins, and solves Trick-or-Treat doors.",
+    hw_farm="Auto Halloween Farm",
 }
 
 getgenv().TEXT.ru = {
     window_name="Roblox is Unbreakable | @morik_yt v%s",loading_title="Roblox is Unbreakable",loading_subtitle="от morik_yt",
-    tab_home="Главная",tab_teleports="Телепорты",tab_farm="Фарм",tab_skin="Фарм скинов",tab_sell="Авто продажа",tab_mob="Фарм мобов",tab_outfit="Одежда",tab_sbr="SBR",
+    tab_home="Главная",tab_teleports="Телепорты",tab_farm="Фарм",tab_skin="Фарм скинов",tab_sell="Авто продажа",tab_mob="Фарм мобов",tab_outfit="Одежда",tab_sbr="SBR",tab_halloween="Хэллоуин",
     sec_language="Язык",sec_info="Информация",sec_movement="Движение",sec_misc="Разное",sec_app="Приложение",sec_chest="Фарм сундуков",sec_meteorite="Фарм метеоритов",
     sec_skin_sel="Выбор скинов",sec_farm_settings="Настройки фарма",sec_farm_control="Управление",sec_auto_buy="Авто покупка",
     sec_target="Выбор цели",sec_move_settings="Настройки движения",sec_attack="Настройки атаки",sec_farm="Фарм",
@@ -82,11 +84,13 @@ getgenv().TEXT.ru = {
     status_building_pity="Коплю pity: %.1f%% / %.1f%% (только Arrow)",status_phase1_ge="Фаза 1/2 — Arrow для Gold Experience...",status_phase2_req="Фаза 2/2 — Requiem Arrow на Gold Experience...",
     status_phase1_ws="Фаза 1/2 — Arrow для Whitesnake...",status_phase2_gb="Фаза 2/2 — Green Baby в Whitesnake...",status_remove_first="Стоп — сними стенд/скин.",
     status_starting="Старт — метод: %s",status_done="Готово — скин: %s",status_stopped="Остановлено.",
+    hw_info_title="Важная информация",hw_info_text="Настоятельно рекомендуется использовать этот фарм ТОЛЬКО на приватных серверах, чтобы избежать репортов и фармить максимально эффективно. Фарм автоматически собирает души (Wisp), ломает тыквы и решает мини-игры с дверьми.",
+    hw_farm="Авто Фарм Хэллоуин",
 }
 
 getgenv().TEXT.de = {
     window_name="Roblox is Unbreakable | @morik_yt v%s",loading_title="Roblox is Unbreakable",loading_subtitle="von morik_yt",
-    tab_home="Start",tab_teleports="Teleport",tab_farm="Farm",tab_skin="Skin-Farm",tab_sell="Auto-Verkauf",tab_mob="Mob-Farm",tab_outfit="Outfit",tab_sbr="SBR",
+    tab_home="Start",tab_teleports="Teleport",tab_farm="Farm",tab_skin="Skin-Farm",tab_sell="Auto-Verkauf",tab_mob="Mob-Farm",tab_outfit="Outfit",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="Sprache",sec_info="Information",sec_movement="Bewegung",sec_misc="Sonstiges",sec_app="App",sec_chest="Truhen-Farm",sec_meteorite="Meteoriten-Farm",
     sec_skin_sel="Skin-Auswahl",sec_farm_settings="Farm-Einstellungen",sec_farm_control="Farm-Steuerung",sec_auto_buy="Auto-Kauf",
     sec_target="Zielauswahl",sec_move_settings="Bewegungseinstellungen",sec_attack="Angriffs-Einstellungen",sec_farm="Farm",
@@ -124,17 +128,19 @@ getgenv().TEXT.de = {
     status_building_pity="Pity aufbauen: %.1f%% / %.1f%% (nur Pfeil)",status_phase1_ge="Phase 1/2 — Pfeil für Gold Experience...",status_phase2_req="Phase 2/2 — Requiem-Pfeil auf Gold Experience...",
     status_phase1_ws="Phase 1/2 — Pfeil für Whitesnake...",status_phase2_gb="Phase 2/2 — Green Baby mit Whitesnake verbinden...",status_remove_first="Gestoppt — Stand/Skin zuerst entfernen.",
     status_starting="Start — Methode: %s",status_done="Fertig — Skin: %s",status_stopped="Gestoppt.",
+    hw_info_title="Wichtige Information",hw_info_text="Es wird dringend empfohlen, diesen Farm auf einem PRIVATEN SERVER zu verwenden, um Meldungen zu vermeiden. Farm sammelt automatisch Irrlichter, Kürbisse und löst Türen.",
+    hw_farm="Auto Halloween Farm",
 }
 
 getgenv().TEXT.fr = {
     window_name="Roblox is Unbreakable | @morik_yt v%s",loading_title="Roblox is Unbreakable",loading_subtitle="par morik_yt",
-    tab_home="Accueil",tab_teleports="Téléports",tab_farm="Farm",tab_skin="Farm de skins",tab_sell="Vente auto",tab_mob="Farm de mobs",tab_outfit="Tenue",tab_sbr="SBR",
+    tab_home="Accueil",tab_teleports="Téléports",tab_farm="Farm",tab_skin="Farm de skins",tab_sell="Vente auto",tab_mob="Farm de mobs",tab_outfit="Tenue",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="Langue",sec_info="Information",sec_movement="Déplacement",sec_misc="Divers",sec_app="Application",sec_chest="Farm coffres",sec_meteorite="Farm météorites",
     sec_skin_sel="Sélection de skins",sec_farm_settings="Paramètres du farm",sec_farm_control="Contrôle du farm",sec_auto_buy="Achat automatique",
     sec_target="Sélection de cible",sec_move_settings="Paramètres de déplacement",sec_attack="Paramètres d'attaque",sec_farm="Farm",
     sec_player_outfit="Joueur & Tenue",sec_pieces="Sélection de pièces",sec_actions="Actions",
     lang_label="Langue de l'interface",lang_changed="Langue sauvegardée. Relancez le script pour appliquer.",
-    welcome_title="Bienvenue",welcome_text="Bienvenue dans Roblox is Unbreakable — un script créé par morik_yt. En cas de problème, rejoignez le Discord. Version Premium à seulement $5.",
+    welcome_title="Bienvenue",welcome_text="Bienvenue dans Roblox is Unbreakable — un script créé par morik_yt. En cas de problème, rejoignez le Discord. Version Premium à seulement 5$.",
     join_discord="Rejoindre Discord",stand_up="Se lever",speed_value="Vitesse",speed_hack="Speed Hack",jump_value="Saut",jump_hack="Jump Hack",
     heal="Soigner ($50)",auto_stand="Invocation auto du Stand",show_roles="Afficher les rôles",staff_alert="Alerte staff",destroy_gui="Fermer le GUI",staff_online="Staff en ligne",
     players="Joueurs",npc_friendly="PNJ amicaux",npc_hostile="PNJ hostiles",search_all="Recherche (Joueurs / PNJ)",search_ph="Entrer un nom...",
@@ -166,11 +172,13 @@ getgenv().TEXT.fr = {
     status_building_pity="Accumulation pity : %.1f%% / %.1f%% (Flèche seulement)",status_phase1_ge="Phase 1/2 — Flèche pour Gold Experience...",status_phase2_req="Phase 2/2 — Flèche Requiem sur Gold Experience...",
     status_phase1_ws="Phase 1/2 — Flèche pour Whitesnake...",status_phase2_gb="Phase 2/2 — Fusion Green Baby avec Whitesnake...",status_remove_first="Arrêté — retirez d'abord votre Stand/Skin.",
     status_starting="Démarrage — méthode : %s",status_done="Terminé — skin : %s",status_stopped="Arrêté.",
+    hw_info_title="Information Importante",hw_info_text="Il est fortement recommandé d'utiliser ce farm sur un SERVEUR PRIVÉ pour éviter les signalements. Le script collecte automatiquement les esprits et résout les portes.",
+    hw_farm="Auto Farm Halloween",
 }
 
 getgenv().TEXT.es = {
     window_name="Roblox is Unbreakable | @morik_yt v%s",loading_title="Roblox is Unbreakable",loading_subtitle="por morik_yt",
-    tab_home="Inicio",tab_teleports="Teletransportes",tab_farm="Farmear",tab_skin="Farm de skins",tab_sell="Venta auto",tab_mob="Farm de mobs",tab_outfit="Atuendo",tab_sbr="SBR",
+    tab_home="Inicio",tab_teleports="Teletransportes",tab_farm="Farmear",tab_skin="Farm de skins",tab_sell="Venta auto",tab_mob="Farm de mobs",tab_outfit="Atuendo",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="Idioma",sec_info="Información",sec_movement="Movimiento",sec_misc="Miscelánea",sec_app="Aplicación",sec_chest="Farm cofres",sec_meteorite="Farm meteoritos",
     sec_skin_sel="Selección de skins",sec_farm_settings="Configuración del farm",sec_farm_control="Control del farm",sec_auto_buy="Compra automática",
     sec_target="Selección de objetivo",sec_move_settings="Configuración de movimiento",sec_attack="Configuración de ataque",sec_farm="Farm",
@@ -208,11 +216,13 @@ getgenv().TEXT.es = {
     status_building_pity="Acumulando pity: %.1f%% / %.1f%% (solo Flecha)",status_phase1_ge="Fase 1/2 — Flecha para Gold Experience...",status_phase2_req="Fase 2/2 — Flecha Requiem en Gold Experience...",
     status_phase1_ws="Fase 1/2 — Flecha para Whitesnake...",status_phase2_gb="Fase 2/2 — Fusionando Green Baby con Whitesnake...",status_remove_first="Detenido — quita tu Stand/Skin primero.",
     status_starting="Iniciando — método: %s",status_done="Listo — skin: %s",status_stopped="Detenido.",
+    hw_info_title="Información importante",hw_info_text="Se recomienda usar este farm en un SERVIDOR PRIVADO para evitar reportes. Recolecta automáticamente espíritus, calabazas y resuelve las puertas.",
+    hw_farm="Auto Farm Halloween",
 }
 
 getgenv().TEXT.pt = {
     window_name="Roblox is Unbreakable | @morik_yt v%s",loading_title="Roblox is Unbreakable",loading_subtitle="por morik_yt",
-    tab_home="Início",tab_teleports="Teleportes",tab_farm="Farm",tab_skin="Farm de skins",tab_sell="Venda auto",tab_mob="Farm de mobs",tab_outfit="Roupa",tab_sbr="SBR",
+    tab_home="Início",tab_teleports="Teleportes",tab_farm="Farm",tab_skin="Farm de skins",tab_sell="Venda auto",tab_mob="Farm de mobs",tab_outfit="Roupa",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="Idioma",sec_info="Informação",sec_movement="Movimento",sec_misc="Diversos",sec_app="Aplicativo",sec_chest="Farm de baús",sec_meteorite="Farm de meteoritos",
     sec_skin_sel="Seleção de skins",sec_farm_settings="Config. do farm",sec_farm_control="Controle do farm",sec_auto_buy="Compra automática",
     sec_target="Seleção de alvo",sec_move_settings="Config. de movimento",sec_attack="Config. de ataque",sec_farm="Farm",
@@ -250,11 +260,13 @@ getgenv().TEXT.pt = {
     status_building_pity="Acumulando pity: %.1f%% / %.1f%% (apenas Flecha)",status_phase1_ge="Fase 1/2 — Flecha para Gold Experience...",status_phase2_req="Fase 2/2 — Flecha Requiem em Gold Experience...",
     status_phase1_ws="Fase 1/2 — Flecha para Whitesnake...",status_phase2_gb="Fase 2/2 — Fundindo Green Baby com Whitesnake...",status_remove_first="Parado — remova seu Stand/Skin primeiro.",
     status_starting="Iniciando — método: %s",status_done="Concluído — skin: %s",status_stopped="Parado.",
+    hw_info_title="Informação Importante",hw_info_text="Recomenda-se usar este farm num SERVIDOR PRIVADO para evitar denúncias e melhorar o farm.",
+    hw_farm="Auto Farm Halloween",
 }
 
 getgenv().TEXT.tr = {
     window_name="Roblox is Unbreakable | @morik_yt v%s",loading_title="Roblox is Unbreakable",loading_subtitle="morik_yt tarafından",
-    tab_home="Ana Sayfa",tab_teleports="Teleport",tab_farm="Farm",tab_skin="Skin Farm",tab_sell="Otomatik Sat",tab_mob="Mob Farm",tab_outfit="Kıyafet",tab_sbr="SBR",
+    tab_home="Ana Sayfa",tab_teleports="Teleport",tab_farm="Farm",tab_skin="Skin Farm",tab_sell="Otomatik Sat",tab_mob="Mob Farm",tab_outfit="Kıyafet",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="Dil",sec_info="Bilgi",sec_movement="Hareket",sec_misc="Diğer",sec_app="Uygulama",sec_chest="Sandık Farm",sec_meteorite="Meteorit Farm",
     sec_skin_sel="Skin Seçimi",sec_farm_settings="Farm Ayarları",sec_farm_control="Farm Kontrolü",sec_auto_buy="Otomatik Satın Al",
     sec_target="Hedef Seçimi",sec_move_settings="Hareket Ayarları",sec_attack="Saldırı Ayarları",sec_farm="Farm",
@@ -292,11 +304,13 @@ getgenv().TEXT.tr = {
     status_building_pity="Pity biriktiriliyor: %.1f%% / %.1f%% (sadece Ok)",status_phase1_ge="Aşama 1/2 — Gold Experience için Ok...",status_phase2_req="Aşama 2/2 — Gold Experience'a Requiem Ok...",
     status_phase1_ws="Aşama 1/2 — Whitesnake için Ok...",status_phase2_gb="Aşama 2/2 — Green Baby Whitesnake ile birleştiriliyor...",status_remove_first="Durduruldu — önce Stand/Skin'i kaldır.",
     status_starting="Başlatılıyor — yöntem: %s",status_done="Tamamlandı — skin: %s",status_stopped="Durduruldu.",
+    hw_info_title="Önemli Bilgi",hw_info_text="Şikayet edilmemek için bu farmı ÖZEL BİR SUNUCUDA (VIP) kullanmanız şiddetle tavsiye edilir.",
+    hw_farm="Otomatik Halloween Farm",
 }
 
 getgenv().TEXT.ja = {
     window_name="Roblox is Unbreakable | @morik_yt v%s",loading_title="Roblox is Unbreakable",loading_subtitle="morik_yt 制作",
-    tab_home="ホーム",tab_teleports="テレポート",tab_farm="ファーム",tab_skin="スキンファーム",tab_sell="自動売却",tab_mob="モブファーム",tab_outfit="衣装",tab_sbr="SBR",
+    tab_home="ホーム",tab_teleports="テレポート",tab_farm="ファーム",tab_skin="スキンファーム",tab_sell="自動売却",tab_mob="モブファーム",tab_outfit="衣装",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="言語",sec_info="情報",sec_movement="移動",sec_misc="その他",sec_app="アプリ",sec_chest="宝箱ファーム",sec_meteorite="隕石ファーム",
     sec_skin_sel="スキン選択",sec_farm_settings="ファーム設定",sec_farm_control="ファーム制御",sec_auto_buy="自動購入",
     sec_target="ターゲット選択",sec_move_settings="移動設定",sec_attack="攻撃設定",sec_farm="ファーム",
@@ -334,11 +348,13 @@ getgenv().TEXT.ja = {
     status_building_pity="Pityを蓄積中: %.1f%% / %.1f%% (矢のみ)",status_phase1_ge="フェーズ1/2 — Gold Experience用に矢を使用...",status_phase2_req="フェーズ2/2 — Gold ExperienceにRequiem矢を使用...",
     status_phase1_ws="フェーズ1/2 — Whitesnake用に矢を使用...",status_phase2_gb="フェーズ2/2 — Green BabyをWhitesnakeに合成...",status_remove_first="停止 — まずスタンド/スキンを外してください。",
     status_starting="開始 — メソッド: %s",status_done="完了 — スキン: %s",status_stopped="停止しました。",
+    hw_info_title="重要情報",hw_info_text="通報を避けるため、プライベートサーバーでファームを使用することを強くお勧めします。",
+    hw_farm="Halloween 自動ファーム",
 }
 
 getgenv().TEXT.ko = {
     window_name="Roblox is Unbreakable | @morik_yt v%s",loading_title="Roblox is Unbreakable",loading_subtitle="morik_yt 제작",
-    tab_home="홈",tab_teleports="텔레포트",tab_farm="파밍",tab_skin="스킨 파밍",tab_sell="자동 판매",tab_mob="몹 파밍",tab_outfit="의상",tab_sbr="SBR",
+    tab_home="홈",tab_teleports="텔레포트",tab_farm="파밍",tab_skin="스킨 파밍",tab_sell="자동 판매",tab_mob="몹 파밍",tab_outfit="의상",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="언어",sec_info="정보",sec_movement="이동",sec_misc="기타",sec_app="앱",sec_chest="상자 파밍",sec_meteorite="운석 파밍",
     sec_skin_sel="스킨 선택",sec_farm_settings="파밍 설정",sec_farm_control="파밍 제어",sec_auto_buy="자동 구매",
     sec_target="대상 선택",sec_move_settings="이동 설정",sec_attack="공격 설정",sec_farm="파밍",
@@ -376,11 +392,13 @@ getgenv().TEXT.ko = {
     status_building_pity="Pity 쌓는 중: %.1f%% / %.1f%% (화살만)",status_phase1_ge="페이즈 1/2 — Gold Experience를 위한 화살...",status_phase2_req="페이즈 2/2 — Gold Experience에 레퀴엠 화살...",
     status_phase1_ws="페이즈 1/2 — Whitesnake를 위한 화살...",status_phase2_gb="페이즈 2/2 — Green Baby를 Whitesnake에 합성...",status_remove_first="중단됨 — 먼저 스탠드/스킨을 제거하세요.",
     status_starting="시작 중 — 방법: %s",status_done="완료 — 스킨: %s",status_stopped="중단됨.",
+    hw_info_title="중요 정보",hw_info_text="신고를 피하기 위해 프라이빗 서버에서 파밍을 사용하는 것이 좋습니다.",
+    hw_farm="Halloween 자동 파밍",
 }
 
 getgenv().TEXT.zh = {
     window_name="Roblox is Unbreakable | @morik_yt v%s",loading_title="Roblox is Unbreakable",loading_subtitle="由 morik_yt 制作",
-    tab_home="主页",tab_teleports="传送",tab_farm="刷怪",tab_skin="皮肤农场",tab_sell="自动出售",tab_mob="怪物农场",tab_outfit="服装",tab_sbr="SBR",
+    tab_home="主页",tab_teleports="传送",tab_farm="刷怪",tab_skin="皮肤农场",tab_sell="自动出售",tab_mob="怪物农场",tab_outfit="服装",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="语言",sec_info="信息",sec_movement="移动",sec_misc="杂项",sec_app="应用",sec_chest="箱子农场",sec_meteorite="陨石农场",
     sec_skin_sel="皮肤选择",sec_farm_settings="农场设置",sec_farm_control="农场控制",sec_auto_buy="自动购买",
     sec_target="目标选择",sec_move_settings="移动设置",sec_attack="攻击设置",sec_farm="农场",
@@ -418,11 +436,13 @@ getgenv().TEXT.zh = {
     status_building_pity="正在积累 Pity: %.1f%% / %.1f%%（仅箭矢）",status_phase1_ge="阶段 1/2 — 使用箭矢获取 Gold Experience...",status_phase2_req="阶段 2/2 — 对 Gold Experience 使用 Requiem 箭矢...",
     status_phase1_ws="阶段 1/2 — 使用箭矢获取 Whitesnake...",status_phase2_gb="阶段 2/2 — 将 Green Baby 与 Whitesnake 合并...",status_remove_first="已停止 — 请先移除替身/皮肤。",
     status_starting="启动中 — 方式: %s",status_done="完成 — 皮肤: %s",status_stopped="已停止。",
+    hw_info_title="重要信息",hw_info_text="强烈建议在私人服务器（VIP）上使用此农场，以避免被举报。",
+    hw_farm="Halloween 自动农场",
 }
 
 getgenv().TEXT.ar = {
     window_name="Roblox is Unbreakable | @morik_yt v%s",loading_title="Roblox is Unbreakable",loading_subtitle="بواسطة morik_yt",
-    tab_home="الرئيسية",tab_teleports="نقل فوري",tab_farm="زراعة",tab_skin="زراعة السكن",tab_sell="بيع تلقائي",tab_mob="زراعة المخلوقات",tab_outfit="ملابس",tab_sbr="SBR",
+    tab_home="الرئيسية",tab_teleports="نقل فوري",tab_farm="زراعة",tab_skin="زراعة السكن",tab_sell="بيع تلقائي",tab_mob="زراعة المخلوقات",tab_outfit="ملابس",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="اللغة",sec_info="معلومات",sec_movement="الحركة",sec_misc="متنوع",sec_app="التطبيق",sec_chest="زراعة الصناديق",sec_meteorite="زراعة النيازك",
     sec_skin_sel="اختيار السكن",sec_farm_settings="إعدادات الزراعة",sec_farm_control="التحكم في الزراعة",sec_auto_buy="شراء تلقائي",
     sec_target="اختيار الهدف",sec_move_settings="إعدادات الحركة",sec_attack="إعدادات الهجوم",sec_farm="زراعة",
@@ -460,11 +480,13 @@ getgenv().TEXT.ar = {
     status_building_pity="تراكم Pity: %.1f%% / %.1f%% (سهم فقط)",status_phase1_ge="المرحلة 1/2 — سهم لـ Gold Experience...",status_phase2_req="المرحلة 2/2 — سهم Requiem على Gold Experience...",
     status_phase1_ws="المرحلة 1/2 — سهم لـ Whitesnake...",status_phase2_gb="المرحلة 2/2 — دمج Green Baby مع Whitesnake...",status_remove_first="إيقاف — أزل الستاند/السكن أولاً.",
     status_starting="جاري البدء — الطريقة: %s",status_done="اكتمل — السكن: %s",status_stopped="متوقف.",
+    hw_info_title="معلومات هامة",hw_info_text="يوصى بشدة باستخدام هذه الزراعة في خادم خاص لتجنب الإبلاغ.",
+    hw_farm="Halloween زراعة تلقائية",
 }
 
 getgenv().TEXT.pl = {
     window_name="Roblox is Unbreakable | @morik_yt v%s",loading_title="Roblox is Unbreakable",loading_subtitle="przez morik_yt",
-    tab_home="Główna",tab_teleports="Teleporty",tab_farm="Farmienie",tab_skin="Farm skinów",tab_sell="Auto-sprzedaż",tab_mob="Farm mobów",tab_outfit="Strój",tab_sbr="SBR",
+    tab_home="Główna",tab_teleports="Teleporty",tab_farm="Farmienie",tab_skin="Farm skinów",tab_sell="Auto-sprzedaż",tab_mob="Farm mobów",tab_outfit="Strój",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="Język",sec_info="Informacje",sec_movement="Ruch",sec_misc="Różne",sec_app="Aplikacja",sec_chest="Farm skrzyń",sec_meteorite="Farm meteorytów",
     sec_skin_sel="Wybór skinów",sec_farm_settings="Ustawienia farmy",sec_farm_control="Sterowanie farmą",sec_auto_buy="Auto-zakup",
     sec_target="Wybór celu",sec_move_settings="Ustawienia ruchu",sec_attack="Ustawienia ataku",sec_farm="Farmienie",
@@ -502,92 +524,94 @@ getgenv().TEXT.pl = {
     status_building_pity="Kumuluję pity: %.1f%% / %.1f%% (tylko strzały)",status_phase1_ge="Faza 1/2 — strzała dla Gold Experience...",status_phase2_req="Faza 2/2 — strzała Requiem na Gold Experience...",
     status_phase1_ws="Faza 1/2 — strzała dla Whitesnake...",status_phase2_gb="Faza 2/2 — łączę Green Baby z Whitesnake...",status_remove_first="Zatrzymano — najpierw zdejmij stand/skin.",
     status_starting="Rozpoczynanie — metoda: %s",status_done="Gotowe — skin: %s",status_stopped="Zatrzymano.",
+    hw_info_title="Ważna informacja",hw_info_text="Zalecamy używanie farmy na PRYWATNYM SERWERZE, aby uniknąć zgłoszeń.",
+    hw_farm="Auto Halloween Farmienie",
 }
 
 local PREMIUM_LOCALE = {
     en = {
         prem_banner_title    = "Premium Status",
-        prem_banner_unlocked = "Premium Active! All Mob Farm & Outfit Changer features are unlocked.",
+        prem_banner_unlocked = "Premium Active! All Mob Farm, Outfit & Halloween features are unlocked.",
         prem_banner_locked   = "PREVIEW MODE: These features are visible for preview only. Unlock Premium for just $5 in Discord (%s)!",
         prem_locked_title    = "Premium Feature Locked",
-        prem_locked_desc     = "Unlock Mob Farm & Outfit Changer for $5! Contact %s on Discord.",
+        prem_locked_desc     = "Unlock Mob Farm, Halloween & Outfit Changer for $5! Contact %s on Discord.",
     },
     ru = {
         prem_banner_title    = "Статус Premium",
-        prem_banner_unlocked = "Premium активен! Все функции фарма мобов и смены одежды разблокированы.",
+        prem_banner_unlocked = "Premium активен! Все функции фарма мобов, Хэллоуина и смены одежды разблокированы.",
         prem_banner_locked   = "РЕЖИМ ПРОСМОТРА: Вы можете просматривать функции, но для использования нужен Premium ($5). Купить в Discord: %s",
         prem_locked_title    = "Доступно только в Premium",
-        prem_locked_desc     = "Разблокируй Фарм Мобов и Одежду всего за $5! Пиши в Discord: %s",
+        prem_locked_desc     = "Разблокируй Хэллоуин Фарм, Фарм Мобов и Одежду всего за $5! Пиши в Discord: %s",
     },
     de = {
         prem_banner_title    = "Premium-Status",
         prem_banner_unlocked = "Premium aktiv! Alle Funktionen sind freigeschaltet.",
         prem_banner_locked   = "VORSCHAU-MODUS: Nur zur Ansicht. Schalte Premium für $5 auf Discord (%s) frei!",
         prem_locked_title    = "Premium-Funktion gesperrt",
-        prem_locked_desc     = "Schalte Mob-Farm & Outfit für $5 frei! Discord: %s",
+        prem_locked_desc     = "Schalte Mob-Farm, Halloween & Outfit für $5 frei! Discord: %s",
     },
     fr = {
         prem_banner_title    = "Statut Premium",
         prem_banner_unlocked = "Premium actif ! Toutes les fonctionnalités sont débloquées.",
         prem_banner_locked   = "MODE APERÇU : Débloquez la version Premium pour seulement 5$ sur Discord (%s) !",
         prem_locked_title    = "Fonction Premium verrouillée",
-        prem_locked_desc     = "Débloquez Mob Farm & Tenues pour 5$ ! Discord : %s",
+        prem_locked_desc     = "Débloquez Halloween, Mob Farm & Tenues pour 5$ ! Discord : %s",
     },
     es = {
         prem_banner_title    = "Estado Premium",
         prem_banner_unlocked = "¡Premium activo! Todas las funciones están desbloqueadas.",
         prem_banner_locked   = "MODO VISTA PREVIA: ¡Desbloquea Premium por solo $5 en Discord (%s)!",
         prem_locked_title    = "Función Premium bloqueada",
-        prem_locked_desc     = "¡Desbloquea Mob Farm y Atuendos por $5! Discord: %s",
+        prem_locked_desc     = "¡Desbloquea Mob Farm, Halloween y Atuendos por $5! Discord: %s",
     },
     pt = {
         prem_banner_title    = "Status Premium",
         prem_banner_unlocked = "Premium ativo! Todos os recursos estão desbloqueados.",
         prem_banner_locked   = "MODO DE VISUALIZAÇÃO: Desbloqueie o Premium por apenas $5 no Discord (%s)!",
         prem_locked_title    = "Recurso Premium bloqueado",
-        prem_locked_desc     = "Desbloqueie Mob Farm e Roupas por $5! Discord: %s",
+        prem_locked_desc     = "Desbloqueie Mob Farm, Halloween e Roupas por $5! Discord: %s",
     },
     tr = {
         prem_banner_title    = "Premium Durumu",
         prem_banner_unlocked = "Premium Aktif! Tüm özelliklerin kilidi açıldı.",
         prem_banner_locked   = "ÖNİZLEME MODU: Sadece $5 karşılığında Discord üzerinden (%s) Premium'u açın!",
         prem_locked_title    = "Premium Özellik Kilitli",
-        prem_locked_desc     = "Mob Farm ve Kıyafetleri $5'a açın! Discord: %s",
+        prem_locked_desc     = "Mob Farm, Halloween ve Kıyafetleri $5'a açın! Discord: %s",
     },
     ja = {
         prem_banner_title    = "プレミアムステータス",
         prem_banner_unlocked = "プレミアム有効！すべての機能がアンロックされています。",
         prem_banner_locked   = "プレビューモード：Discord (%s) でわずか$5でプレミアムを解除できます！",
         prem_locked_title    = "プレミアム限定機能",
-        prem_locked_desc     = "$5でモブファームと衣装機能を解除！ Discord: %s",
+        prem_locked_desc     = "$5でハロウィンファーム、モブファームと衣装機能を解除！ Discord: %s",
     },
     ko = {
         prem_banner_title    = "프리미엄 상태",
         prem_banner_unlocked = "프리미엄 활성화됨! 모든 기능이 잠금 해제되었습니다.",
         prem_banner_locked   = "미리보기 모드: Discord(%s)에서 단 $5로 프리미엄을 잠금 해제하세요!",
         prem_locked_title    = "프리미엄 기능 잠김",
-        prem_locked_desc     = "$5로 몹 파밍 및 의상 기능을 해제하세요! Discord: %s",
+        prem_locked_desc     = "$5로 할로윈 파밍, 몹 파밍 및 의상 기능을 해제하세요! Discord: %s",
     },
     zh = {
         prem_banner_title    = "高级版状态",
         prem_banner_unlocked = "高级版已激活！所有功能均已解锁。",
         prem_banner_locked   = "预览模式：仅需 $5 即可在 Discord (%s) 解锁高级版功能！",
         prem_locked_title    = "高级版功能已锁定",
-        prem_locked_desc     = "仅需 $5 解锁怪物农场与换装！Discord: %s",
+        prem_locked_desc     = "仅需 $5 解锁万圣节农场、怪物农场与换装！Discord: %s",
     },
     ar = {
         prem_banner_title    = "حالة البريميوم",
         prem_banner_unlocked = "البريميوم مفعل! جميع الميزات مفتوحة.",
         prem_banner_locked   = "وضع المعاينة: افتح النسخة المميزة مقابل 5$ فقط عبر ديسكورد (%s)!",
         prem_locked_title    = "ميزة بريميوم مقفلة",
-        prem_locked_desc     = "افتح زراعة المخلوقات والملابس بـ 5$! ديسكورد: %s",
+        prem_locked_desc     = "افتح زراعة المخلوقات، الهالوين والملابس بـ 5$! ديسكورد: %s",
     },
     pl = {
         prem_banner_title    = "Status Premium",
         prem_banner_unlocked = "Premium aktywne! Wszystkie funkcje są odblokowane.",
         prem_banner_locked   = "TRYB PODGLĄDU: Odblokuj Premium za jedyne $5 na Discordzie (%s)!",
         prem_locked_title    = "Funkcja Premium zablokowana",
-        prem_locked_desc     = "Odblokuj Mob Farm i Stroje za $5! Discord: %s",
+        prem_locked_desc     = "Odblokuj Halloween, Mob Farm i Stroje za $5! Discord: %s",
     }
 }
 
