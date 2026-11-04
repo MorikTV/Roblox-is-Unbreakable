@@ -42,6 +42,10 @@ getgenv().TEXT.en = {
     status_starting="Starting — method: %s",status_done="Done — got target skin: %s",status_stopped="Stopped.",
     hw_info_title="Important Information",hw_info_text="It is highly recommended to use the Halloween farm on a PRIVATE SERVER to avoid getting reported and to maximize efficiency. This farm automatically collects Wisps, Pumpkins, and solves Trick-or-Treat doors.",
     hw_farm="Auto Halloween Farm",
+    sec_hw_targets="Farm Targets",hw_t_doors="Farm Doors (Trick-or-Treat)",hw_t_pumpkins="Farm Pumpkins",hw_t_wisps="Farm Wisps (Souls)",
+    hw_doors_first="Prioritize Doors",hw_height_pumpkin="Pumpkin Hover Height",hw_height_wisp="Wisp Hover Height",sec_hw_timing="Timing Settings",
+    hw_pumpkin_time="Pumpkin Hit Time (s)",hw_wisp_time="Wisp Collect Time (s)",hw_attack_delay="Attack Delay (s)",hw_door_cd="Door Cooldown (s)",
+    sec_hw_extra="Extra Settings",hw_auto_answer="Auto Answer Trick-or-Treat",hw_patrol="Patrol Spots When Idle",hw_noclip="Noclip While Farming",
 }
 
 getgenv().TEXT.ru = {
@@ -86,6 +90,10 @@ getgenv().TEXT.ru = {
     status_starting="Старт — метод: %s",status_done="Готово — скин: %s",status_stopped="Остановлено.",
     hw_info_title="Важная информация",hw_info_text="Настоятельно рекомендуется использовать этот фарм ТОЛЬКО на приватных серверах, чтобы избежать репортов и фармить максимально эффективно. Фарм автоматически собирает души (Wisp), ломает тыквы и решает мини-игры с дверьми.",
     hw_farm="Авто Фарм Хэллоуин",
+    sec_hw_targets="Цели фарма",hw_t_doors="Фармить двери (Trick-or-Treat)",hw_t_pumpkins="Фармить тыквы",hw_t_wisps="Фармить виспы (души)",
+    hw_doors_first="Приоритет дверей",hw_height_pumpkin="Высота над тыквой",hw_height_wisp="Высота над виспом",sec_hw_timing="Настройки времени",
+    hw_pumpkin_time="Время удара по тыкве (с)",hw_wisp_time="Время сбора виспа (с)",hw_attack_delay="Задержка атаки (с)",hw_door_cd="Кулдаун двери (с)",
+    sec_hw_extra="Дополнительно",hw_auto_answer="Авто-ответ в Trick-or-Treat",hw_patrol="Облёт точек без цели",hw_noclip="Noclip во время фарма",
 }
 
 getgenv().TEXT.de = {
@@ -130,6 +138,10 @@ getgenv().TEXT.de = {
     status_starting="Start — Methode: %s",status_done="Fertig — Skin: %s",status_stopped="Gestoppt.",
     hw_info_title="Wichtige Information",hw_info_text="Es wird dringend empfohlen, diesen Farm auf einem PRIVATEN SERVER zu verwenden, um Meldungen zu vermeiden. Farm sammelt automatisch Irrlichter, Kürbisse und löst Türen.",
     hw_farm="Auto Halloween Farm",
+    sec_hw_targets="Farm-Ziele",hw_t_doors="Türen farmen (Trick-or-Treat)",hw_t_pumpkins="Kürbisse farmen",hw_t_wisps="Irrlichter farmen (Seelen)",
+    hw_doors_first="Türen priorisieren",hw_height_pumpkin="Schwebehöhe Kürbis",hw_height_wisp="Schwebehöhe Irrlicht",sec_hw_timing="Zeiteinstellungen",
+    hw_pumpkin_time="Kürbis-Schlagzeit (s)",hw_wisp_time="Irrlicht-Sammelzeit (s)",hw_attack_delay="Angriffsverzögerung (s)",hw_door_cd="Tür-Abklingzeit (s)",
+    sec_hw_extra="Zusatzeinstellungen",hw_auto_answer="Trick-or-Treat automatisch lösen",hw_patrol="Punkte bei Leerlauf abfliegen",hw_noclip="Noclip beim Farmen",
 }
 
 getgenv().TEXT.fr = {
@@ -174,6 +186,10 @@ getgenv().TEXT.fr = {
     status_starting="Démarrage — méthode : %s",status_done="Terminé — skin : %s",status_stopped="Arrêté.",
     hw_info_title="Information Importante",hw_info_text="Il est fortement recommandé d'utiliser ce farm sur un SERVEUR PRIVÉ pour éviter les signalements. Le script collecte automatiquement les esprits et résout les portes.",
     hw_farm="Auto Farm Halloween",
+    sec_hw_targets="Cibles du farm",hw_t_doors="Farm des portes (Trick-or-Treat)",hw_t_pumpkins="Farm des citrouilles",hw_t_wisps="Farm des esprits (âmes)",
+    hw_doors_first="Priorité aux portes",hw_height_pumpkin="Hauteur au-dessus de la citrouille",hw_height_wisp="Hauteur au-dessus de l'esprit",sec_hw_timing="Réglages de temps",
+    hw_pumpkin_time="Temps de frappe citrouille (s)",hw_wisp_time="Temps de collecte esprit (s)",hw_attack_delay="Délai d'attaque (s)",hw_door_cd="Délai des portes (s)",
+    sec_hw_extra="Réglages supplémentaires",hw_auto_answer="Réponse auto Trick-or-Treat",hw_patrol="Patrouille si inactif",hw_noclip="Noclip pendant le farm",
 }
 
 getgenv().TEXT.es = {
@@ -218,6 +234,10 @@ getgenv().TEXT.es = {
     status_starting="Iniciando — método: %s",status_done="Listo — skin: %s",status_stopped="Detenido.",
     hw_info_title="Información importante",hw_info_text="Se recomienda usar este farm en un SERVIDOR PRIVADO para evitar reportes. Recolecta automáticamente espíritus, calabazas y resuelve las puertas.",
     hw_farm="Auto Farm Halloween",
+    sec_hw_targets="Objetivos del farm",hw_t_doors="Farm de puertas (Trick-or-Treat)",hw_t_pumpkins="Farm de calabazas",hw_t_wisps="Farm de espíritus (almas)",
+    hw_doors_first="Priorizar puertas",hw_height_pumpkin="Altura sobre la calabaza",hw_height_wisp="Altura sobre el espíritu",sec_hw_timing="Ajustes de tiempo",
+    hw_pumpkin_time="Tiempo de golpe a calabaza (s)",hw_wisp_time="Tiempo de recogida de espíritu (s)",hw_attack_delay="Retraso de ataque (s)",hw_door_cd="Enfriamiento de puerta (s)",
+    sec_hw_extra="Ajustes extra",hw_auto_answer="Respuesta automática Trick-or-Treat",hw_patrol="Patrullar puntos sin objetivo",hw_noclip="Noclip mientras se farmea",
 }
 
 getgenv().TEXT.pt = {
@@ -262,6 +282,10 @@ getgenv().TEXT.pt = {
     status_starting="Iniciando — método: %s",status_done="Concluído — skin: %s",status_stopped="Parado.",
     hw_info_title="Informação Importante",hw_info_text="Recomenda-se usar este farm num SERVIDOR PRIVADO para evitar denúncias e melhorar o farm.",
     hw_farm="Auto Farm Halloween",
+    sec_hw_targets="Alvos do farm",hw_t_doors="Farm de portas (Trick-or-Treat)",hw_t_pumpkins="Farm de abóboras",hw_t_wisps="Farm de espíritos (almas)",
+    hw_doors_first="Priorizar portas",hw_height_pumpkin="Altura sobre a abóbora",hw_height_wisp="Altura sobre o espírito",sec_hw_timing="Configurações de tempo",
+    hw_pumpkin_time="Tempo de ataque à abóbora (s)",hw_wisp_time="Tempo de coleta do espírito (s)",hw_attack_delay="Atraso de ataque (s)",hw_door_cd="Cooldown da porta (s)",
+    sec_hw_extra="Configurações extras",hw_auto_answer="Resposta automática Trick-or-Treat",hw_patrol="Patrulhar pontos sem alvo",hw_noclip="Noclip durante o farm",
 }
 
 getgenv().TEXT.tr = {
@@ -306,6 +330,10 @@ getgenv().TEXT.tr = {
     status_starting="Başlatılıyor — yöntem: %s",status_done="Tamamlandı — skin: %s",status_stopped="Durduruldu.",
     hw_info_title="Önemli Bilgi",hw_info_text="Şikayet edilmemek için bu farmı ÖZEL BİR SUNUCUDA (VIP) kullanmanız şiddetle tavsiye edilir.",
     hw_farm="Otomatik Halloween Farm",
+    sec_hw_targets="Farm Hedefleri",hw_t_doors="Kapıları Farmla (Trick-or-Treat)",hw_t_pumpkins="Kabakları Farmla",hw_t_wisps="Ruhları Farmla (Wisp)",
+    hw_doors_first="Kapılara Öncelik Ver",hw_height_pumpkin="Kabak Üstü Yükseklik",hw_height_wisp="Wisp Üstü Yükseklik",sec_hw_timing="Zamanlama Ayarları",
+    hw_pumpkin_time="Kabağa Vurma Süresi (sn)",hw_wisp_time="Wisp Toplama Süresi (sn)",hw_attack_delay="Saldırı Gecikmesi (sn)",hw_door_cd="Kapı Bekleme Süresi (sn)",
+    sec_hw_extra="Ekstra Ayarlar",hw_auto_answer="Trick-or-Treat Otomatik Cevap",hw_patrol="Boştayken Noktaları Gez",hw_noclip="Farm Sırasında Noclip",
 }
 
 getgenv().TEXT.ja = {
@@ -350,6 +378,10 @@ getgenv().TEXT.ja = {
     status_starting="開始 — メソッド: %s",status_done="完了 — スキン: %s",status_stopped="停止しました。",
     hw_info_title="重要情報",hw_info_text="通報を避けるため、プライベートサーバーでファームを使用することを強くお勧めします。",
     hw_farm="Halloween 自動ファーム",
+    sec_hw_targets="ファーム対象",hw_t_doors="ドアをファーム (Trick-or-Treat)",hw_t_pumpkins="カボチャをファーム",hw_t_wisps="ウィスプ（魂）をファーム",
+    hw_doors_first="ドアを優先",hw_height_pumpkin="カボチャ上の高さ",hw_height_wisp="ウィスプ上の高さ",sec_hw_timing="タイミング設定",
+    hw_pumpkin_time="カボチャ攻撃時間 (秒)",hw_wisp_time="ウィスプ回収時間 (秒)",hw_attack_delay="攻撃ディレイ (秒)",hw_door_cd="ドアのクールダウン (秒)",
+    sec_hw_extra="追加設定",hw_auto_answer="Trick-or-Treat 自動回答",hw_patrol="待機中にスポットを巡回",hw_noclip="ファーム中ノークリップ",
 }
 
 getgenv().TEXT.ko = {
@@ -394,6 +426,10 @@ getgenv().TEXT.ko = {
     status_starting="시작 중 — 방법: %s",status_done="완료 — 스킨: %s",status_stopped="중단됨.",
     hw_info_title="중요 정보",hw_info_text="신고를 피하기 위해 프라이빗 서버에서 파밍을 사용하는 것이 좋습니다.",
     hw_farm="Halloween 자동 파밍",
+    sec_hw_targets="파밍 대상",hw_t_doors="문 파밍 (Trick-or-Treat)",hw_t_pumpkins="호박 파밍",hw_t_wisps="위습(영혼) 파밍",
+    hw_doors_first="문 우선",hw_height_pumpkin="호박 위 높이",hw_height_wisp="위습 위 높이",sec_hw_timing="시간 설정",
+    hw_pumpkin_time="호박 공격 시간 (초)",hw_wisp_time="위습 수집 시간 (초)",hw_attack_delay="공격 딜레이 (초)",hw_door_cd="문 쿨다운 (초)",
+    sec_hw_extra="추가 설정",hw_auto_answer="Trick-or-Treat 자동 응답",hw_patrol="대기 중 지점 순찰",hw_noclip="파밍 중 노클립",
 }
 
 getgenv().TEXT.zh = {
@@ -438,6 +474,10 @@ getgenv().TEXT.zh = {
     status_starting="启动中 — 方式: %s",status_done="完成 — 皮肤: %s",status_stopped="已停止。",
     hw_info_title="重要信息",hw_info_text="强烈建议在私人服务器（VIP）上使用此农场，以避免被举报。",
     hw_farm="Halloween 自动农场",
+    sec_hw_targets="农场目标",hw_t_doors="农场门 (Trick-or-Treat)",hw_t_pumpkins="农场南瓜",hw_t_wisps="农场幽灵（灵魂）",
+    hw_doors_first="优先处理门",hw_height_pumpkin="南瓜上方高度",hw_height_wisp="幽灵上方高度",sec_hw_timing="时间设置",
+    hw_pumpkin_time="击打南瓜时间 (秒)",hw_wisp_time="收集幽灵时间 (秒)",hw_attack_delay="攻击延迟 (秒)",hw_door_cd="门冷却 (秒)",
+    sec_hw_extra="额外设置",hw_auto_answer="Trick-or-Treat 自动回答",hw_patrol="空闲时巡逻地点",hw_noclip="农场时穿墙",
 }
 
 getgenv().TEXT.ar = {
@@ -482,6 +522,10 @@ getgenv().TEXT.ar = {
     status_starting="جاري البدء — الطريقة: %s",status_done="اكتمل — السكن: %s",status_stopped="متوقف.",
     hw_info_title="معلومات هامة",hw_info_text="يوصى بشدة باستخدام هذه الزراعة في خادم خاص لتجنب الإبلاغ.",
     hw_farm="Halloween زراعة تلقائية",
+    sec_hw_targets="أهداف الزراعة",hw_t_doors="زراعة الأبواب (Trick-or-Treat)",hw_t_pumpkins="زراعة اليقطين",hw_t_wisps="زراعة الأرواح (Wisp)",
+    hw_doors_first="أولوية الأبواب",hw_height_pumpkin="ارتفاع التحليق فوق اليقطين",hw_height_wisp="ارتفاع التحليق فوق الروح",sec_hw_timing="إعدادات التوقيت",
+    hw_pumpkin_time="وقت ضرب اليقطين (ث)",hw_wisp_time="وقت جمع الروح (ث)",hw_attack_delay="تأخير الهجوم (ث)",hw_door_cd="تبريد الباب (ث)",
+    sec_hw_extra="إعدادات إضافية",hw_auto_answer="إجابة Trick-or-Treat تلقائيًا",hw_patrol="التجول بين النقاط عند الخمول",hw_noclip="Noclip أثناء الزراعة",
 }
 
 getgenv().TEXT.pl = {
@@ -526,6 +570,10 @@ getgenv().TEXT.pl = {
     status_starting="Rozpoczynanie — metoda: %s",status_done="Gotowe — skin: %s",status_stopped="Zatrzymano.",
     hw_info_title="Ważna informacja",hw_info_text="Zalecamy używanie farmy na PRYWATNYM SERWERZE, aby uniknąć zgłoszeń.",
     hw_farm="Auto Halloween Farmienie",
+    sec_hw_targets="Cele farmy",hw_t_doors="Farmuj drzwi (Trick-or-Treat)",hw_t_pumpkins="Farmuj dynie",hw_t_wisps="Farmuj duszki (dusze)",
+    hw_doors_first="Priorytet drzwi",hw_height_pumpkin="Wysokość nad dynią",hw_height_wisp="Wysokość nad duszkiem",sec_hw_timing="Ustawienia czasu",
+    hw_pumpkin_time="Czas uderzania w dynię (s)",hw_wisp_time="Czas zbierania duszka (s)",hw_attack_delay="Opóźnienie ataku (s)",hw_door_cd="Odnowienie drzwi (s)",
+    sec_hw_extra="Dodatkowe ustawienia",hw_auto_answer="Auto odpowiedź Trick-or-Treat",hw_patrol="Patrol punktów w bezczynności",hw_noclip="Noclip podczas farmy",
 }
 
 local PREMIUM_LOCALE = {
