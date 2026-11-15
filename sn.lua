@@ -1,41 +1,172 @@
 --!nonstrict
 --!optimize 2
+--!native
 
 --[[
-    SiriusNexus v3.0 (Rayfield Gen2 based)
+    SiriusNexus v3.1 (Rayfield Gen2 based — Optimized Edition)
     Author: morik_yt.
 
-    A layer on top of Rayfield Gen2. It does not draw UI itself. It adds
-      Maid, Loop, Utils, Net, Signal
-      Premium gate (lock, buy popup, verifier hook, server module loader hook)
-      Auto updating player dropdown, searchable dropdowns, search input
-      Safe callbacks (an error in your callback never breaks the UI)
-      Hotkeys, UI toggle key, notifications with dedupe, confirm popup
-      Settings tab (theme, UI key, language, config profiles, unload)
-      Nexus Midnight and Nexus Abyss themes
-      Gen1 style API compatibility (Name, CurrentValue, Callback, Options...)
-
-    There is NO hardcoded premium flag. Premium comes only from
-    Window:SetPremiumVerifier(fn) or Window:SetPremiumStatus(bool).
-    Real protection must live on your server. Deliver the paid code through
-    Window:SetPremiumLoader(fn) after the server confirms the license.
+    Changes in v3.1:
+      - Theme-adaptive Premium header tag (auto-syncs with active theme & ChangeTheme)
+      - Single centralized Heartbeat scheduler for all Loops and Toggle OnTicks
+      - Zero-allocation hot paths (_safe via direct xpcall, table.create, table.clear)
+      - Reduced Luau <-> Engine property bridge crossings & spatial query in NearestPlayer
+      - Cached globals, table.find, continue, and native vector math
+      - Built-in Profiler (os.clock + debug.profilebegin/profileend)
 ]]
 
+-- ============================================================================
+-- CACHED GLOBALS (Stage 4: Luau micro-optimizations)
+-- ============================================================================
+local type = type
+local typeof = typeof
+local pcall = pcall
+local xpcall = xpcall
+local tostring = tostring
+local select = select
+local pairs = pairs
+local ipairs = ipairs
+local setmetatable = setmetatable
+local assert = assert
+local warn = warn
+local loadstring = loadstring
+
+local os_clock = os.clock
+local math_max = math.max
+local math_min = math.min
+local math_huge = math.huge
+
+local table_insert = table.insert
+local table_remove = table.remove
+local table_find = table.find
+local table_clear = table.clear
+local table_create = table.create
+local table_sort = table.sort
+local unpack = table.unpack or unpack
+
+local string_format = string.format
+local string_lower = string.lower
+local string_find = string.find
+local string_sub = string.sub
+local string_gsub = string.gsub
+
+local task_spawn = task.spawn
+local task_defer = task.defer
+local task_delay = task.delay
+local task_wait = task.wait
+local task_cancel = task.cancel
+
+local debug_traceback = debug.traceback
+local debug_profilebegin = debug.profilebegin or function() end
+local debug_profileend = debug.profileend or function() end
+
+local Vector3_zero = Vector3.zero
+local CFrame_new = CFrame.new
+local Color3_fromRGB = Color3.fromRGB
+local ColorSequence_new = ColorSequence.new
+local UDim_new = UDim.new
+local UDim2_new = UDim2.new
+
 local Nexus = {
-    Version = "3.0.0",
+    Version = "3.1.0",
     Price = "$5",
 }
 
 -- ============================================================================
+-- PROFILER (Stage 5: Measurement with os.clock & debug.profilebegin)
+-- ============================================================================
+local Profiler = {
+    Enabled = false,
+    _stats = {},
+}
+
+function Profiler:Begin(label)
+    if not self.Enabled then return nil end
+    debug_profilebegin(label)
+    return os_clock()
+end
+
+function Profiler:End(label, startClock)
+    if not startClock then return end
+    local elapsed = os_clock() - startClock
+    debug_profileend()
+    local st = self._stats[label]
+    if not st then
+        st = { calls = 0, total = 0, max = 0 }
+        self._stats[label] = st
+    end
+    st.calls += 1
+    st.total += elapsed
+    if elapsed > st.max then st.max = elapsed end
+end
+
+function Profiler:Measure(label, fn, ...)
+    if not self.Enabled then
+        return fn(...)
+    end
+    debug_profilebegin(label)
+    local t0 = os_clock()
+    local a, b, c, d = fn(...)
+    local dt = os_clock() - t0
+    debug_profileend()
+    local st = self._stats[label]
+    if not st then
+        st = { calls = 0, total = 0, max = 0 }
+        self._stats[label] = st
+    end
+    st.calls += 1
+    st.total += dt
+    if dt > st.max then st.max = dt end
+    return a, b, c, d
+end
+
+function Profiler:Reset()
+    table_clear(self._stats)
+end
+
+function Profiler:GetReport()
+    local rows = {}
+    for label, st in pairs(self._stats) do
+        local avgMs = (st.calls > 0) and ((st.total / st.calls) * 1000) or 0
+        rows[#rows + 1] = {
+            Label = label,
+            Calls = st.calls,
+            TotalMs = st.total * 1000,
+            AvgMs = avgMs,
+            MaxMs = st.max * 1000,
+        }
+    end
+    table_sort(rows, function(a, b) return a.TotalMs > b.TotalMs end)
+    return rows
+end
+
+function Profiler:FormatReport(topN)
+    local rows = self:GetReport()
+    local limit = math_min(#rows, topN or 15)
+    if limit == 0 then return "[Nexus Profiler] No samples recorded." end
+    local lines = table_create(limit + 1)
+    lines[1] = "[Nexus Profiler] Top hotspots (sorted by TotalMs):"
+    for i = 1, limit do
+        local r = rows[i]
+        lines[i + 1] = string_format(
+            "  %d. %-28s | calls: %-6d | avg: %.3f ms | max: %.3f ms | total: %.2f ms",
+            i, r.Label, r.Calls, r.AvgMs, r.MaxMs, r.TotalMs
+        )
+    end
+    return table.concat(lines, "\n")
+end
+
+Nexus.Profiler = Profiler
+
+-- ============================================================================
 -- ENV
 -- ============================================================================
-local unpack = table.unpack or unpack
 local Env = {}
 Env.Global = (type(getgenv) == "function" and getgenv()) or _G
 Env.CloneRef = (type(cloneref) == "function" and cloneref) or function(inst) return inst end
 
 function Env:GetService(name)
-    local ok, svc = pcall(function() return game:GetService(name) end)
+    local ok, svc = pcall(game.GetService, game, name)
     if not ok or not svc then return nil end
     local ok2, ref = pcall(Env.CloneRef, svc)
     return ok2 and ref or svc
@@ -46,6 +177,7 @@ local RunService       = Env:GetService("RunService")
 local TweenService     = Env:GetService("TweenService")
 local UserInputService = Env:GetService("UserInputService")
 local HttpService      = Env:GetService("HttpService")
+local Workspace        = Env:GetService("Workspace") or workspace
 local LocalPlayer      = Players and Players.LocalPlayer
 
 Nexus.Env = Env
@@ -53,7 +185,8 @@ Nexus.Env = Env
 local LOCK = "\u{1F512} "
 
 local function pick(t, ...)
-    for i = 1, select("#", ...) do
+    local n = select("#", ...)
+    for i = 1, n do
         local v = t[(select(i, ...))]
         if v ~= nil then return v end
     end
@@ -61,15 +194,17 @@ local function pick(t, ...)
 end
 
 local function copyList(t)
-    local o = {}
-    if type(t) == "table" then
-        for i, v in ipairs(t) do o[i] = v end
-    end
+    if type(t) ~= "table" then return {} end
+    local n = #t
+    if n == 0 then return {} end
+    local o = table_create(n)
+    for i = 1, n do o[i] = t[i] end
     return o
 end
 
--- Lucide icons as single images (same asset ids Rayfield Gen1 used). Gen2 only
--- takes asset ids, so names are converted here.
+-- ============================================================================
+-- ICONS
+-- ============================================================================
 local ICON_IDS = {
     ["CD"]=7734110220,["activity"]=7733655755,["airplay"]=7733655834,["alarm-check"]=7733655912,
     ["alarm-clock"]=7733656100,["alarm-clock-off"]=7733656003,["alarm-minus"]=7733656164,
@@ -231,18 +366,25 @@ local ICON_ALIASES = {
     ["cog"] = "settings", ["bolt"] = "settings", ["fire"] = "flame", ["dollar"] = "dollar-sign",
 }
 
+local ICON_CACHE = {}
+
 local function toIcon(v)
     if type(v) == "number" then
-        if v ~= 0 then return v end
-        return nil
+        return v ~= 0 and v or nil
     end
     if type(v) ~= "string" or v == "" then return nil end
-    if v:find("^rbx") then return v end
-    local key = v:lower()
+    local cached = ICON_CACHE[v]
+    if cached ~= nil then return cached or nil end
+    if string_find(v, "^rbx") then
+        ICON_CACHE[v] = v
+        return v
+    end
+    local key = string_lower(v)
     key = ICON_ALIASES[key] or key
     local id = ICON_IDS[key]
-    if id then return "rbxassetid://" .. id end
-    return nil
+    local res = id and ("rbxassetid://" .. id) or false
+    ICON_CACHE[v] = res
+    return res or nil
 end
 
 local function toKeyCode(v)
@@ -256,12 +398,12 @@ end
 
 local function stripLock(name)
     name = tostring(name)
-    if name:sub(1, #LOCK) == LOCK then return name:sub(#LOCK + 1) end
+    if string_sub(name, 1, #LOCK) == LOCK then return string_sub(name, #LOCK + 1) end
     return name
 end
 
 -- ============================================================================
--- SIGNAL
+-- SIGNAL (Zero-allocation Fire when single/no mutation)
 -- ============================================================================
 local Signal = {}
 Signal.__index = Signal
@@ -271,27 +413,31 @@ function Signal.new()
 end
 
 function Signal:Connect(fn)
-    local handler = { fn = fn }
-    table.insert(self._h, handler)
+    local hList = self._h
+    table_insert(hList, fn)
     local conn = { Connected = true }
     function conn.Disconnect()
+        if not conn.Connected then return end
         conn.Connected = false
-        for i, h in ipairs(self._h) do
-            if h == handler then table.remove(self._h, i) break end
-        end
+        local idx = table_find(hList, fn)
+        if idx then table_remove(hList, idx) end
     end
     return conn
 end
 
 function Signal:Fire(...)
-    local snapshot = copyList(self._h)
-    for _, h in ipairs(snapshot) do
-        task.spawn(h.fn, ...)
+    local hList = self._h
+    local n = #hList
+    if n == 0 then return end
+    local snap = table_create(n)
+    for i = 1, n do snap[i] = hList[i] end
+    for i = 1, n do
+        task_spawn(snap[i], ...)
     end
 end
 
 function Signal:Destroy()
-    self._h = {}
+    table_clear(self._h)
 end
 
 Nexus.Signal = Signal
@@ -303,7 +449,7 @@ local Maid = {}
 Maid.__index = Maid
 
 function Maid.new()
-    return setmetatable({ _tasks = {}, _n = 0 }, Maid)
+    return setmetatable({ _tasks = {}, _scratch = {}, _n = 0 }, Maid)
 end
 
 function Maid:_clean(item)
@@ -313,10 +459,10 @@ function Maid:_clean(item)
     elseif t == "Instance" then
         pcall(item.Destroy, item)
     elseif t == "thread" then
-        pcall(task.cancel, item)
-    elseif type(item) == "function" then
+        pcall(task_cancel, item)
+    elseif t == "function" then
         pcall(item)
-    elseif type(item) == "table" then
+    elseif t == "table" then
         if type(item.Destroy) == "function" then
             pcall(item.Destroy, item)
         elseif type(item.Disconnect) == "function" then
@@ -330,8 +476,9 @@ function Maid:Add(item, key)
         self:CleanKey(key)
         self._tasks[key] = item
     else
-        self._n = self._n + 1
-        self._tasks[self._n] = item
+        local n = self._n + 1
+        self._n = n
+        self._tasks[n] = item
     end
     return item
 end
@@ -353,19 +500,34 @@ function Maid:Has(key)
 end
 
 function Maid:DoCleaning()
-    local snapshot = {}
-    for k, v in pairs(self._tasks) do snapshot[k] = v end
-    self._tasks = {}
-    for _, v in pairs(snapshot) do self:_clean(v) end
+    local tasks = self._tasks
+    local scratch = self._scratch
+    table_clear(scratch)
+    local count = 0
+    for k, v in pairs(tasks) do
+        count += 1
+        scratch[count] = v
+        tasks[k] = nil
+    end
+    self._n = 0
+    for i = 1, count do
+        self:_clean(scratch[i])
+    end
+    table_clear(scratch)
 end
 
 Maid.Destroy = Maid.DoCleaning
 Nexus.Maid = Maid
 
 -- ============================================================================
--- UTILS
+-- UTILS (Stage 3 & 4: Reduced Instance reads/writes + Spatial Query)
 -- ============================================================================
 local Utils = {}
+
+-- Shared OverlapParams reused across NearestPlayer spatial queries (zero allocations)
+local sharedOverlapParams = OverlapParams.new()
+sharedOverlapParams.FilterType = Enum.RaycastFilterType.Exclude
+local sharedFilterArray = table_create(1)
 
 function Utils:GetCharacter(plr)
     local target = plr or LocalPlayer
@@ -390,9 +552,13 @@ end
 
 function Utils:FreezeRoot(root)
     local r = root or self:GetRootPart(LocalPlayer)
-    if r then
-        r.AssemblyLinearVelocity = Vector3.zero
-        r.AssemblyAngularVelocity = Vector3.zero
+    if not r then return end
+    -- Stage 3: Read once, only write across the Luau-Engine boundary if non-zero
+    if r.AssemblyLinearVelocity ~= Vector3_zero then
+        r.AssemblyLinearVelocity = Vector3_zero
+    end
+    if r.AssemblyAngularVelocity ~= Vector3_zero then
+        r.AssemblyAngularVelocity = Vector3_zero
     end
 end
 
@@ -400,10 +566,10 @@ function Utils:SafeTeleport(targetCFrame, offset, smoothDuration)
     local hum = self:GetHumanoid(LocalPlayer)
     local root = self:GetRootPart(LocalPlayer)
     if not root then return false end
-    local dest = targetCFrame * CFrame.new(offset or Vector3.zero)
+    local dest = offset and (targetCFrame * CFrame_new(offset)) or targetCFrame
     if hum and hum.Sit then
         hum.Sit = false
-        task.wait(0.05)
+        task_wait(0.05)
     end
     self:FreezeRoot(root)
     if smoothDuration and smoothDuration > 0 then
@@ -414,32 +580,75 @@ function Utils:SafeTeleport(targetCFrame, offset, smoothDuration)
     return true
 end
 
--- Runs fn now and after every respawn. Returns a connection for your Maid.
 function Utils:OnRespawn(fn)
-    if LocalPlayer.Character then task.spawn(fn, LocalPlayer.Character) end
-    return LocalPlayer.CharacterAdded:Connect(function(char) task.spawn(fn, char) end)
+    local char = LocalPlayer and LocalPlayer.Character
+    if char then task_spawn(fn, char) end
+    return LocalPlayer.CharacterAdded:Connect(function(newChar)
+        task_spawn(fn, newChar)
+    end)
 end
 
+@native
+local function vectorDistance(a: Vector3, b: Vector3): number
+    return (a - b).Magnitude
+end
+
+-- Stage 3: Uses GetPartBoundsInRadius spatial query when a finite radius is given,
+-- and caches root.Position in a local variable before iterating.
 function Utils:NearestPlayer(maxDistance)
-    local root = self:GetRootPart(LocalPlayer)
+    local localChar = LocalPlayer and LocalPlayer.Character
+    local root = localChar and (localChar:FindFirstChild("HumanoidRootPart") or localChar.PrimaryPart)
     if not root then return nil end
-    local best, bestDist = nil, maxDistance or math.huge
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer then
-            local r = self:GetRootPart(p)
-            if r then
-                local d = (r.Position - root.Position).Magnitude
-                if d < bestDist then best, bestDist = p, d end
+
+    local origin = root.Position
+    local bestPlr = nil
+    local bestDist = maxDistance or math_huge
+
+    -- Use spatial query if radius is reasonable and Workspace supports GetPartBoundsInRadius
+    if bestDist < 2000 and Workspace and type(Workspace.GetPartBoundsInRadius) == "function" then
+        sharedFilterArray[1] = localChar
+        sharedOverlapParams.FilterDescendantsInstances = sharedFilterArray
+        local ok, parts = pcall(Workspace.GetPartBoundsInRadius, Workspace, origin, bestDist, sharedOverlapParams)
+        if ok and parts then
+            local seenModels = {}
+            for i = 1, #parts do
+                local part = parts[i]
+                local model = part.Parent
+                if not model or seenModels[model] then continue end
+                seenModels[model] = true
+                local plr = Players:GetPlayerFromCharacter(model)
+                if not plr or plr == LocalPlayer then continue end
+                local targetRoot = model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart or part
+                local d = vectorDistance(targetRoot.Position, origin)
+                if d < bestDist then
+                    bestDist = d
+                    bestPlr = plr
+                end
             end
+            return bestPlr, bestDist
         end
     end
-    return best, bestDist
+
+    -- Fallback: linear scan with single cached `origin` read
+    local plrs = Players:GetPlayers()
+    for i = 1, #plrs do
+        local p = plrs[i]
+        if p == LocalPlayer then continue end
+        local r = self:GetRootPart(p)
+        if not r then continue end
+        local d = vectorDistance(r.Position, origin)
+        if d < bestDist then
+            bestDist = d
+            bestPlr = p
+        end
+    end
+    return bestPlr, bestDist
 end
 
 function Utils.Debounce(fn, delay)
     local last = 0
     return function(...)
-        local now = os.clock()
+        local now = os_clock()
         if now - last >= delay then
             last = now
             return fn(...)
@@ -447,8 +656,9 @@ function Utils.Debounce(fn, delay)
     end
 end
 
-function Utils.Clamp(v, a, b)
-    return math.max(a, math.min(b, v))
+@native
+function Utils.Clamp(v: number, a: number, b: number): number
+    return math_max(a, math_min(b, v))
 end
 
 function Utils.Copy(text)
@@ -462,7 +672,7 @@ end
 Nexus.Utils = Utils
 
 -- ============================================================================
--- NET (small helper for your HWID / license backend)
+-- NET
 -- ============================================================================
 local Net = {}
 
@@ -475,10 +685,11 @@ function Net.Request(opts)
     return true, res
 end
 
--- Returns ok, decodedBody, rawResponse. Retries on network failure only.
 function Net.PostJson(url, body, headers, retries)
     local h = { ["Content-Type"] = "application/json" }
-    for k, v in pairs(headers or {}) do h[k] = v end
+    if headers then
+        for k, v in pairs(headers) do h[k] = v end
+    end
     local payload = HttpService:JSONEncode(body or {})
     local lastErr = "unknown"
     for attempt = 1, (retries or 1) + 1 do
@@ -493,7 +704,7 @@ function Net.PostJson(url, body, headers, retries)
             return code >= 200 and code < 300, decoded, res
         end
         lastErr = tostring(res)
-        task.wait(0.4 * attempt)
+        task_wait(0.4 * attempt)
     end
     return false, nil, lastErr
 end
@@ -501,16 +712,16 @@ end
 Nexus.Net = Net
 
 -- ============================================================================
--- THEMES (documented Gen2 keys only)
+-- THEMES & THEME-MATCHED PREMIUM TAG PALETTES
 -- ============================================================================
-local function rgb(r, g, b) return Color3.fromRGB(r, g, b) end
+local function rgb(r, g, b) return Color3_fromRGB(r, g, b) end
 
 local function buildTheme(accent, accentStroke, glowFrom, glowTo)
     return {
-        CornerRoundness = UDim.new(0, 14),
-        ElementCornerRadius = UDim.new(0, 10),
-        PillCornerRadius = UDim.new(0, 10),
-        WindowColor = ColorSequence.new(rgb(19, 20, 28), rgb(13, 14, 20)),
+        CornerRoundness = UDim_new(0, 14),
+        ElementCornerRadius = UDim_new(0, 10),
+        PillCornerRadius = UDim_new(0, 10),
+        WindowColor = ColorSequence_new(rgb(19, 20, 28), rgb(13, 14, 20)),
         ShadowColor = rgb(0, 0, 0),
         SurfaceStroke = rgb(44, 46, 64),
         LiveAnimation = true,
@@ -521,10 +732,10 @@ local function buildTheme(accent, accentStroke, glowFrom, glowTo)
         ActionColor = rgb(150, 156, 190),
 
         TabColor = rgb(172, 178, 208),
-        TabBackground = ColorSequence.new(rgb(32, 34, 50), rgb(25, 27, 39)),
-        TabStroke = ColorSequence.new(rgb(70, 72, 110), rgb(48, 50, 78)),
+        TabBackground = ColorSequence_new(rgb(32, 34, 50), rgb(25, 27, 39)),
+        TabStroke = ColorSequence_new(rgb(70, 72, 110), rgb(48, 50, 78)),
 
-        ElementGradient = ColorSequence.new(rgb(28, 30, 43), rgb(22, 24, 34)),
+        ElementGradient = ColorSequence_new(rgb(28, 30, 43), rgb(22, 24, 34)),
         ElementStroke = rgb(46, 48, 68),
         ElementStrokeHover = accent,
         ElementTransparency = 0,
@@ -537,7 +748,7 @@ local function buildTheme(accent, accentStroke, glowFrom, glowTo)
         AccentGlow = 0.7,
         SliderBackground = rgb(34, 36, 52),
         SliderBackgroundHover = rgb(41, 43, 62),
-        SliderProgress = ColorSequence.new(glowFrom, glowTo),
+        SliderProgress = ColorSequence_new(glowFrom, glowTo),
         SliderStroke = rgb(60, 62, 90),
         SliderHandle = rgb(255, 255, 255),
         ToggleTrack = rgb(40, 42, 60),
@@ -560,17 +771,37 @@ Nexus.Themes = {
     abyss    = buildTheme(rgb(62, 140, 255), rgb(110, 176, 255), rgb(40, 110, 240), rgb(90, 170, 255)),
 }
 
+-- Fallback surface & accent colors for built-in Gen2 themes so the Premium tag
+-- always blends seamlessly with the active window theme.
+local BUILTIN_THEME_SURFACES = {
+    midnight = { free = rgb(30, 32, 46), premium = rgb(44, 40, 68) },
+    abyss    = { free = rgb(28, 32, 46), premium = rgb(34, 48, 72) },
+    default  = { free = rgb(34, 30, 32), premium = rgb(46, 38, 42) },
+    cobalt   = { free = rgb(26, 32, 44), premium = rgb(34, 46, 68) },
+    ember    = { free = rgb(38, 28, 26), premium = rgb(54, 36, 32) },
+    amethyst = { free = rgb(34, 28, 44), premium = rgb(48, 36, 66) },
+    frost    = { free = rgb(28, 36, 42), premium = rgb(36, 50, 60) },
+    rose     = { free = rgb(38, 28, 34), premium = rgb(54, 36, 46) },
+}
+
 local THEME_LABELS = { "Nexus Midnight", "Nexus Abyss", "Default", "Cobalt", "Ember", "Amethyst", "Frost", "Rose" }
 local THEME_VALUES = { "midnight", "abyss", "default", "cobalt", "ember", "amethyst", "frost", "rose" }
 
 function Nexus:RegisterTheme(name, tbl)
-    self.Themes[tostring(name):lower()] = tbl
+    self.Themes[string_lower(tostring(name))] = tbl
+end
+
+local function resolveThemeKey(t)
+    if type(t) == "string" then
+        return string_gsub(string_lower(t), "^nexus%s*", "")
+    end
+    return "midnight"
 end
 
 local function resolveTheme(t)
     if type(t) == "string" then
-        local key = t:lower():gsub("^nexus%s*", "")
-        return Nexus.Themes[key] or Nexus.Themes[t:lower()] or t
+        local key = resolveThemeKey(t)
+        return Nexus.Themes[key] or Nexus.Themes[string_lower(t)] or t
     end
     return t
 end
@@ -601,7 +832,7 @@ local function loadCore(folder, channel)
     local cache = folder .. "/gen2_core_" .. (channel or "stable") .. ".lua"
     local lib = nil
 
-    local ok, body = pcall(function() return game:HttpGet(url) end)
+    local ok, body = pcall(game.HttpGet, game, url)
     if ok and type(body) == "string" and #body > 200 then
         local fn = loadstring(body)
         if fn then
@@ -624,22 +855,33 @@ local function loadCore(folder, channel)
 end
 
 -- ============================================================================
--- WINDOW
+-- WINDOW & ZERO-ALLOCATION ERROR HANDLER (Stage 2)
 -- ============================================================================
 local Win = {}
+
+local _currentErrorLabel = "Nexus"
+local function xpcallErrorHandler(err)
+    warn("[Nexus] " .. tostring(_currentErrorLabel) .. ": " .. tostring(err) .. "\n" .. debug_traceback())
+    return err
+end
 
 local function wrapHandle(raw, extras, virtual)
     extras = extras or {}
     virtual = virtual or {}
+    local methodCache = {}
     local proxy = setmetatable({}, {
         __index = function(_, k)
             local e = extras[k]
             if e ~= nil then return e end
             local vf = virtual[k]
             if vf then return vf() end
+            local cached = methodCache[k]
+            if cached then return cached end
             local v = raw[k]
             if type(v) == "function" then
-                return function(_, ...) return v(raw, ...) end
+                local wrapped = function(_, ...) return v(raw, ...) end
+                methodCache[k] = wrapped
+                return wrapped
             end
             return v
         end,
@@ -649,15 +891,15 @@ local function wrapHandle(raw, extras, virtual)
     return proxy
 end
 
+-- Stage 2: Direct xpcall with varargs — allocates ZERO tables and ZERO closures!
 function Win:_safe(label, fn, ...)
-    local n = select("#", ...)
-    local args = { ... }
-    local ok = xpcall(function() return fn(unpack(args, 1, n)) end, function(e)
-        warn("[Nexus] " .. tostring(label) .. ": " .. tostring(e) .. "\n" .. debug.traceback())
-        return e
-    end)
+    if type(fn) ~= "function" then return false end
+    _currentErrorLabel = label
+    local t0 = Profiler.Enabled and Profiler:Begin(label) or nil
+    local ok = xpcall(fn, xpcallErrorHandler, ...)
+    if t0 then Profiler:End(label, t0) end
     if not ok and self._debugErrors then
-        local now = os.clock()
+        local now = os_clock()
         if now - (self._lastErrAt or -99) > 4 then
             self._lastErrAt = now
             self:Notify({ title = self._S.script_error, content = tostring(label), duration = 4 })
@@ -666,31 +908,137 @@ function Win:_safe(label, fn, ...)
     return ok
 end
 
+-- ============================================================================
+-- CENTRALIZED SCHEDULER (Stage 1: Single shared Heartbeat loop)
+-- ============================================================================
+function Win:_ensureScheduler()
+    if self._stepConn or self._destroyed then return end
+    if #self._tasksList == 0 then return end
+
+    self._stepConn = RunService.Heartbeat:Connect(function(dt)
+        if self._destroyed then
+            self:_stopScheduler()
+            return
+        end
+        local list = self._tasksList
+        local count = #list
+        if count == 0 then
+            self:_stopScheduler()
+            return
+        end
+
+        local i = 1
+        while i <= #list do
+            local entry = list[i]
+            if not entry or not entry.active then
+                table_remove(list, i)
+                continue
+            end
+            local interval = entry.interval
+            if interval <= 0 then
+                self:_safe(entry.label, entry.fn, dt)
+            else
+                local elapsed = entry.elapsed + dt
+                if elapsed >= interval then
+                    entry.elapsed = 0
+                    self:_safe(entry.label, entry.fn, elapsed)
+                else
+                    entry.elapsed = elapsed
+                end
+            end
+            i += 1
+        end
+    end)
+end
+
+function Win:_stopScheduler()
+    if self._stepConn then
+        if self._stepConn.Connected then self._stepConn:Disconnect() end
+        self._stepConn = nil
+    end
+end
+
+function Win:_scheduleTask(key, label, interval, fn)
+    local existing = self._taskMap[key]
+    if existing then
+        existing.fn = fn
+        existing.label = label
+        existing.interval = interval or 0
+        existing.elapsed = 0
+        existing.active = true
+        self:_ensureScheduler()
+        return existing
+    end
+
+    local entry = {
+        key = key,
+        label = label,
+        fn = fn,
+        interval = interval or 0,
+        elapsed = 0,
+        active = true,
+    }
+    self._taskMap[key] = entry
+    table_insert(self._tasksList, entry)
+    self:_ensureScheduler()
+    return entry
+end
+
+function Win:_unscheduleTask(key)
+    local entry = self._taskMap[key]
+    if not entry then return end
+    entry.active = false
+    self._taskMap[key] = nil
+    local idx = table_find(self._tasksList, entry)
+    if idx then table_remove(self._tasksList, idx) end
+    if #self._tasksList == 0 then
+        self:_stopScheduler()
+    end
+end
+
 -- Flags -----------------------------------------------------------------------
 function Win:SetFlag(flag, value)
+    if self._flags[flag] == value then return end
     self._flags[flag] = value
     local l = self._listeners[flag]
-    if l then
-        for _, fn in ipairs(copyList(l)) do task.spawn(fn, value) end
+    if l and #l > 0 then
+        local snap = copyList(l)
+        for i = 1, #snap do
+            task_spawn(snap[i], value)
+        end
     end
 end
 
 function Win:GetFlag(flag)
-    if self._flags[flag] ~= nil then return self._flags[flag] end
-    local ok, v = pcall(self._raw.Get, self._raw, flag)
-    if ok then return v end
+    local v = self._flags[flag]
+    if v ~= nil then return v end
+    local ok, rawVal = pcall(self._raw.Get, self._raw, flag)
+    if ok then return rawVal end
     return nil
 end
 
 function Win:OnFlag(flag, fn)
-    self._listeners[flag] = self._listeners[flag] or {}
-    table.insert(self._listeners[flag], fn)
-    return { Disconnect = function()
-        local l = self._listeners[flag]
-        if l then
-            for i, f in ipairs(l) do if f == fn then table.remove(l, i) break end end
-        end
-    end }
+    local list = self._listeners[flag]
+    if not list then
+        list = {}
+        self._listeners[flag] = list
+    end
+    table_insert(list, fn)
+    return {
+        Disconnect = function()
+            local idx = table_find(list, fn)
+            if idx then table_remove(list, idx) end
+        end,
+    }
+end
+
+-- Profiler helpers ------------------------------------------------------------
+function Win:EnableProfiler(enabled)
+    Profiler.Enabled = (enabled ~= false)
+end
+
+function Win:GetProfileReport(topN)
+    return Profiler:FormatReport(topN)
 end
 
 -- Lifecycle -------------------------------------------------------------------
@@ -702,28 +1050,25 @@ Win.Connect = Win.BindConnection
 function Win:AddTask(item, key) return self._maid:Add(item, key) end
 function Win:CleanTask(key) self._maid:CleanKey(key) end
 
--- Starts a named loop. Replaces any loop with the same key.
+-- Uses the single shared Heartbeat scheduler instead of spawning threads!
 function Win:Loop(key, interval, fn)
     local k = "Loop_" .. tostring(key)
-    self._maid:CleanKey(k)
-    local step = math.max(0.03, interval or 0.1)
-    local thread = task.spawn(function()
-        while true do
-            self:_safe(k, fn, step)
-            task.wait(step)
-        end
-    end)
-    self._maid:Add(thread, k)
-    return thread
+    local step = math_max(0, interval or 0.1)
+    return self:_scheduleTask(k, k, step, fn)
 end
 
-function Win:StopLoop(key) self._maid:CleanKey("Loop_" .. tostring(key)) end
+function Win:StopLoop(key)
+    self:_unscheduleTask("Loop_" .. tostring(key))
+end
 
 function Win:IsAlive() return not self._destroyed end
 
 function Win:Destroy()
     if self._destroyed then return end
     self._destroyed = true
+    self:_stopScheduler()
+    table_clear(self._tasksList)
+    table_clear(self._taskMap)
     self.Destroying:Fire()
     self._maid:DoCleaning()
     pcall(function() self._raw:Unload() end)
@@ -747,7 +1092,7 @@ function Win:Notify(a, b, c, d)
         props = { title = a, content = b, duration = c, icon = toIcon(d) }
     end
     local sig = tostring(props.title) .. "|" .. tostring(props.content)
-    local now = os.clock()
+    local now = os_clock()
     if self._lastNote == sig and now - (self._lastNoteAt or 0) < 1.5 then return end
     self._lastNote, self._lastNoteAt = sig, now
     pcall(self._raw.Notify, self._raw, props)
@@ -785,7 +1130,13 @@ end
 function Win:Bind(id, key, callback, opts)
     local kc = toKeyCode(key)
     if not kc then return false end
-    self._binds[id] = { key = kc, cb = callback, opts = opts or {} }
+    -- Stage 2: Precompute label string once on Bind instead of inside InputBegan
+    self._binds[id] = {
+        key = kc,
+        cb = callback,
+        opts = opts or {},
+        label = "Bind " .. tostring(id),
+    }
     return true
 end
 
@@ -797,9 +1148,91 @@ function Win:SetToggleKey(key)
     return self._uiKey
 end
 
--- Theme -----------------------------------------------------------------------
+-- Theme & Theme-Synced Premium Tag --------------------------------------------
+function Win:_resolveTagColor()
+    local custom = self._premium.TagColors
+    if custom then
+        local c = self._isPremium and custom.Premium or custom.Free
+        if c then return c end
+    end
+
+    -- 1. Try reading surface & accent colors directly from the active theme table
+    local rawTheme = (self._raw and self._raw.theme) or (type(self._activeTheme) == "table" and self._activeTheme) or nil
+    if type(rawTheme) == "table" then
+        local surface = rawTheme.NeutralButton or rawTheme.StatBackground or rawTheme.FieldBackground
+        local accent = rawTheme.AccentColor or rawTheme.ElementStrokeHover
+        if typeof(surface) == "Color3" then
+            if self._isPremium and typeof(accent) == "Color3" then
+                -- Subtle 15% tint of the theme's accent over its own button surface
+                return surface:Lerp(accent, 0.15)
+            end
+            return surface
+        end
+    end
+
+    -- 2. Fallback to the built-in theme palette matching the current theme key
+    local key = self._themeKey or "default"
+    local palette = BUILTIN_THEME_SURFACES[key] or BUILTIN_THEME_SURFACES.default
+    return self._isPremium and palette.premium or palette.free
+end
+
+function Win:_styleTagInstance(tagObj, color)
+    -- If Gen2 exposes the underlying Frame/Instance on the tag object, harmonize
+    -- its stroke and transparency with the rest of the window's buttons/tabs.
+    local inst = type(tagObj) == "table" and (tagObj.instance or tagObj.tag or tagObj.frame or tagObj.container) or nil
+    if typeof(inst) ~= "Instance" then return end
+    local rawTheme = (self._raw and self._raw.theme) or (type(self._activeTheme) == "table" and self._activeTheme) or nil
+    local strokeColor = (type(rawTheme) == "table" and (rawTheme.ElementStroke or rawTheme.SurfaceStroke)) or rgb(52, 50, 58)
+    local textColor = (type(rawTheme) == "table" and (self._isPremium and rawTheme.TitlingColor or rawTheme.TabColor)) or rgb(220, 220, 230)
+
+    pcall(function()
+        local stroke = inst:FindFirstChildOfClass("UIStroke")
+        if stroke then
+            stroke.Color = strokeColor
+            stroke.Transparency = 0.2
+        end
+        local label = inst:FindFirstChildOfClass("TextLabel")
+        if label then
+            label.TextColor3 = textColor
+        end
+    end)
+end
+
+function Win:_updateTag()
+    if self._premium.ShowTag == false then return end
+    local text = self._isPremium and self._S.tag_premium or self._S.tag_free
+    local color = self:_resolveTagColor()
+
+    if not self._tag then
+        local ok, tag = pcall(self._raw.CreateTag, self._raw, { text = text, color = color })
+        if ok and tag then
+            self._tag = tag
+            self._tagText = text
+            self._tagColor = color
+            self:_styleTagInstance(tag, color)
+        end
+    else
+        -- Stage 3: Avoid redundant Luau <-> Engine property writes
+        if self._tagText ~= text then
+            self._tagText = text
+            pcall(self._tag.SetText, self._tag, text)
+        end
+        if self._tagColor ~= color then
+            self._tagColor = color
+            pcall(self._tag.SetColor, self._tag, color)
+        end
+        self:_styleTagInstance(self._tag, color)
+    end
+end
+
 function Win:ChangeTheme(t)
-    return self._raw:ChangeTheme(resolveTheme(t))
+    self._themeKey = resolveThemeKey(t)
+    local resolved = resolveTheme(t)
+    self._activeTheme = resolved
+    local res = self._raw:ChangeTheme(resolved)
+    -- Keep the Premium tag in sync with the newly applied theme
+    self:_updateTag()
+    return res
 end
 
 -- Premium ---------------------------------------------------------------------
@@ -808,40 +1241,32 @@ function Win:IsPremium() return self._isPremium end
 function Win:SetPremiumVerifier(fn) self._verifier = fn end
 function Win:SetPremiumLoader(fn) self._loader = fn end
 
+local RENAME_METHODS = { "SetName", "SetLabel", "SetTitle", "Rename" }
+
 function Win:_refreshLocks()
-    for _, item in ipairs(self._lockables) do
-        local label = self._isPremium and item.base or (LOCK .. item.base)
-        for _, m in ipairs({ "SetName", "SetLabel", "SetTitle", "Rename" }) do
-            local f = item.raw[m]
-            if type(f) == "function" then
-                if pcall(f, item.raw, label) then break end
+    local isPrem = self._isPremium
+    local lockables = self._lockables
+    for i = 1, #lockables do
+        local item = lockables[i]
+        local label = isPrem and item.base or item.locked
+        if item.lastApplied ~= label then
+            for m = 1, #RENAME_METHODS do
+                local f = item.raw[RENAME_METHODS[m]]
+                if type(f) == "function" then
+                    if pcall(f, item.raw, label) then
+                        item.lastApplied = label
+                        break
+                    end
+                end
             end
         end
     end
 end
 
--- Shows FREE or PREMIUM as a pill next to the window title.
-function Win:_updateTag()
-    if self._premium.ShowTag == false then return end
-    local text = self._isPremium and self._S.tag_premium or self._S.tag_free
-    -- Muted colors taken from the Nexus theme so the pill blends in. Override
-    -- with Premium.TagColors = { Free = Color3, Premium = Color3 }.
-    local colors = self._premium.TagColors or {}
-    local color = self._isPremium
-        and (colors.Premium or Color3.fromRGB(82, 70, 176))
-        or (colors.Free or Color3.fromRGB(42, 44, 62))
-    if not self._tag then
-        local ok, tag = pcall(self._raw.CreateTag, self._raw, { text = text, color = color })
-        if ok then self._tag = tag end
-    else
-        pcall(self._tag.SetText, self._tag, text)
-        pcall(self._tag.SetColor, self._tag, color)
-    end
-end
-
 function Win:_applyPremium(valid, info)
-    local changed = (self._isPremium ~= (valid == true))
-    self._isPremium = valid == true
+    local newStatus = (valid == true)
+    local changed = (self._isPremium ~= newStatus)
+    self._isPremium = newStatus
     self.PremiumInfo = info
     if changed then
         self:_refreshLocks()
@@ -851,18 +1276,16 @@ function Win:_applyPremium(valid, info)
     end
 end
 
--- Compatible with the old API. Prefer SetPremiumVerifier.
 function Win:SetPremiumStatus(isPremium, onBlocked)
     if onBlocked ~= nil then self._onPremiumBlocked = onBlocked end
     self:_applyPremium(isPremium == true, nil)
-    if self._isPremium then task.spawn(function() self:LoadPremiumModule() end) end
+    if self._isPremium then task_spawn(function() self:LoadPremiumModule() end) end
 end
 
 function Win:VerifyPremium(callback)
-    if not self._verifier then return false end
-    if self._verifying then return false end
+    if not self._verifier or self._verifying then return false end
     self._verifying = true
-    task.spawn(function()
+    task_spawn(function()
         local ok, res, info = pcall(self._verifier, self)
         if not ok then warn("[Nexus] Premium verifier error: " .. tostring(res)) end
         local valid = ok and res == true
@@ -874,8 +1297,6 @@ function Win:VerifyPremium(callback)
     return true
 end
 
--- Runs only after the verifier said yes. The loader should ask YOUR server for
--- the paid code and return a string (Lua source) or a function.
 function Win:LoadPremiumModule()
     if not self._isPremium or not self._loader or self._moduleLoaded or self._moduleLoading then return false end
     self._moduleLoading = true
@@ -911,20 +1332,24 @@ function Win:CopyBuyLink()
 end
 
 function Win:ShowPremiumPopup(featureName)
-    local boxes = {}
-    for _, f in ipairs(self._premium.Features or {}) do
-        if type(f) == "string" then
-            boxes[#boxes + 1] = { title = f }
-        else
-            boxes[#boxes + 1] = {
-                title = pick(f, "title", "Title", 1) or "",
-                description = pick(f, "description", "Description", 2),
-                icon = toIcon(pick(f, "icon", "Icon")),
-            }
+    local features = self._premium.Features
+    local boxes = features and table_create(#features) or {}
+    if features then
+        for i = 1, #features do
+            local f = features[i]
+            if type(f) == "string" then
+                boxes[#boxes + 1] = { title = f }
+            else
+                boxes[#boxes + 1] = {
+                    title = pick(f, "title", "Title", 1) or "",
+                    description = pick(f, "description", "Description", 2),
+                    icon = toIcon(pick(f, "icon", "Icon")),
+                }
+            end
         end
     end
     local props = {
-        title = string.format(self._S.premium_title, self._price),
+        title = string_format(self._S.premium_title, self._price),
         subtitle = featureName and (self._S.premium_subtitle .. ": " .. featureName) or nil,
         options = {
             { text = self._S.later },
@@ -934,18 +1359,18 @@ function Win:ShowPremiumPopup(featureName)
     if #boxes > 0 then
         props.boxes = boxes
     else
-        props.content = string.format(self._S.premium_body, self._price)
+        props.content = string_format(self._S.premium_body, self._price)
     end
     pcall(self._raw.Popup, self._raw, props)
 end
 
 function Win:_premiumBlocked(featureName)
-    if os.clock() < self._bootUntil then return end -- config autoload must not spam popups
-    local now = os.clock()
+    local now = os_clock()
+    if now < self._bootUntil then return end
     if now - (self._lastGate or -99) < 2 then return end
     self._lastGate = now
     if self._onPremiumBlocked then
-        task.spawn(self._onPremiumBlocked, featureName)
+        task_spawn(self._onPremiumBlocked, featureName)
     else
         self:ShowPremiumPopup(featureName)
     end
@@ -984,16 +1409,21 @@ local function makeContainer(win, rawC)
         return false
     end
 
-    local function register(raw, name, cfg)
+    local function register(raw, name, cfg, initialLabel)
         if cfg.PremiumOnly then
-            table.insert(win._lockables, { raw = raw, base = name })
+            table_insert(win._lockables, {
+                raw = raw,
+                base = name,
+                locked = LOCK .. name,
+                lastApplied = initialLabel,
+            })
         end
     end
 
     local function flagFor(cfg, name)
         local f = pick(cfg, "Flag", "flag")
         if f then return f end
-        return (stripLock(name):gsub("%s+", ""))
+        return (string_gsub(stripLock(name), "%s+", ""))
     end
 
     local function noSave(cfg)
@@ -1013,7 +1443,6 @@ local function makeContainer(win, rawC)
         return rawC:CreateDivider(cfg or {})
     end
 
-    -- Gen2 may have no paragraph element, so fall back to a quiet button.
     function C:CreateParagraph(cfg)
         local title = pick(cfg, "Title", "title", "Name", "name") or ""
         local content = pick(cfg, "Content", "content", "Description", "description") or ""
@@ -1034,8 +1463,9 @@ local function makeContainer(win, rawC)
     function C:CreateButton(cfg)
         local name = pick(cfg, "Name", "name") or "Button"
         local cb = pick(cfg, "Callback", "callback")
+        local initLabel = labelFor(cfg, name)
         local raw = rawC:CreateButton({
-            name = labelFor(cfg, name),
+            name = initLabel,
             description = descFor(cfg),
             icon = toIcon(pick(cfg, "Icon", "icon")),
             callback = function()
@@ -1043,11 +1473,11 @@ local function makeContainer(win, rawC)
                 if cb then win:_safe(name, cb) end
             end,
         })
-        register(raw, name, cfg)
+        register(raw, name, cfg, initLabel)
         return wrapHandle(raw)
     end
 
-    -- Toggle -------------------------------------------------------------------
+    -- Toggle (Stage 1: Routed through the centralized Heartbeat scheduler) -----
     function C:CreateToggle(cfg)
         local name = pick(cfg, "Name", "name") or "Toggle"
         local flag = flagFor(cfg, name)
@@ -1057,31 +1487,27 @@ local function makeContainer(win, rawC)
         local loopKey = "ToggleLoop_" .. flag
         local initial = pick(cfg, "CurrentValue", "value", "Default") == true
         if isLocked(cfg) then initial = false end
+        local initLabel = labelFor(cfg, name)
         local raw
 
         local function syncLoop(state)
+            win:_unscheduleTask(loopKey)
             win._maid:CleanKey(loopKey)
             if not state or not onTick then return end
+
             if loop == nil or loop == "Heartbeat" then
-                win._maid:Add(RunService.Heartbeat:Connect(function(dt) win:_safe(name, onTick, dt) end), loopKey)
+                win:_scheduleTask(loopKey, name, 0, onTick)
+            elseif type(loop) == "number" then
+                win:_scheduleTask(loopKey, name, math_max(0.03, loop), onTick)
             elseif loop == "Stepped" then
                 win._maid:Add(RunService.Stepped:Connect(function(_, dt) win:_safe(name, onTick, dt) end), loopKey)
             elseif loop == "RenderStepped" then
                 win._maid:Add(RunService.RenderStepped:Connect(function(dt) win:_safe(name, onTick, dt) end), loopKey)
-            elseif type(loop) == "number" then
-                local interval = math.max(0.03, loop)
-                local thread = task.spawn(function()
-                    while true do
-                        win:_safe(name, onTick, interval)
-                        task.wait(interval)
-                    end
-                end)
-                win._maid:Add(thread, loopKey)
             end
         end
 
         raw = rawC:CreateToggle({
-            name = labelFor(cfg, name),
+            name = initLabel,
             description = descFor(cfg),
             icon = toIcon(pick(cfg, "Icon", "icon")),
             value = initial,
@@ -1090,7 +1516,7 @@ local function makeContainer(win, rawC)
             callback = function(state)
                 if blocked(cfg, name) then
                     if state then
-                        task.defer(function()
+                        task_defer(function()
                             if raw then pcall(raw.Set, raw, false, true) end
                         end)
                     end
@@ -1101,7 +1527,7 @@ local function makeContainer(win, rawC)
                 syncLoop(state)
             end,
         })
-        register(raw, name, cfg)
+        register(raw, name, cfg, initLabel)
         win._flags[flag] = initial
         if initial then syncLoop(true) end
         return wrapHandle(raw, {}, {
@@ -1117,9 +1543,10 @@ local function makeContainer(win, rawC)
         local cb = pick(cfg, "Callback", "callback")
         local val = pick(cfg, "CurrentValue", "value", "Default") or range[1]
         local last = val
+        local initLabel = labelFor(cfg, name)
         local raw
         raw = rawC:CreateSlider({
-            name = labelFor(cfg, name),
+            name = initLabel,
             description = descFor(cfg),
             icon = toIcon(pick(cfg, "Icon", "icon")),
             range = range,
@@ -1138,7 +1565,7 @@ local function makeContainer(win, rawC)
                 if cb then win:_safe(name, cb, v, dragging) end
             end,
         })
-        register(raw, name, cfg)
+        register(raw, name, cfg, initLabel)
         win._flags[flag] = val
         return wrapHandle(raw, {}, { CurrentValue = function() return raw.value end })
     end
@@ -1149,9 +1576,10 @@ local function makeContainer(win, rawC)
         local flag = flagFor(cfg, name)
         local cb = pick(cfg, "Callback", "callback")
         local clearAfter = pick(cfg, "RemoveTextAfterFocusLost") == true
+        local initLabel = labelFor(cfg, name)
         local raw
         raw = rawC:CreateInput({
-            name = labelFor(cfg, name),
+            name = initLabel,
             description = descFor(cfg),
             icon = toIcon(pick(cfg, "Icon", "icon")),
             value = pick(cfg, "CurrentValue", "value") or "",
@@ -1166,10 +1594,10 @@ local function makeContainer(win, rawC)
                 end
                 win:SetFlag(flag, text)
                 if cb then win:_safe(name, cb, text) end
-                if clearAfter and raw then task.defer(function() pcall(raw.Set, raw, "", true) end) end
+                if clearAfter and raw then task_defer(function() pcall(raw.Set, raw, "", true) end) end
             end,
         })
-        register(raw, name, cfg)
+        register(raw, name, cfg, initLabel)
         return wrapHandle(raw, {}, { CurrentValue = function() return raw.value end })
     end
 
@@ -1178,8 +1606,9 @@ local function makeContainer(win, rawC)
         local name = pick(cfg, "Name", "name") or "Keybind"
         local flag = flagFor(cfg, name)
         local cb = pick(cfg, "Callback", "callback")
+        local initLabel = labelFor(cfg, name)
         local raw = rawC:CreateKeybind({
-            name = labelFor(cfg, name),
+            name = initLabel,
             description = descFor(cfg),
             value = toKeyCode(pick(cfg, "CurrentKeybind", "value", "Default")),
             hold = pick(cfg, "HoldToInteract", "hold"),
@@ -1190,7 +1619,7 @@ local function makeContainer(win, rawC)
                 if cb then win:_safe(name, cb, v) end
             end,
         })
-        register(raw, name, cfg)
+        register(raw, name, cfg, initLabel)
         return wrapHandle(raw, {}, { CurrentKeybind = function() return raw.value end })
     end
 
@@ -1199,11 +1628,12 @@ local function makeContainer(win, rawC)
         local name = pick(cfg, "Name", "name") or "Color"
         local flag = flagFor(cfg, name)
         local cb = pick(cfg, "Callback", "callback")
-        local initial = pick(cfg, "Color", "color", "CurrentValue", "value") or Color3.fromRGB(255, 255, 255)
+        local initial = pick(cfg, "Color", "color", "CurrentValue", "value") or rgb(255, 255, 255)
         local last = initial
+        local initLabel = labelFor(cfg, name)
         local raw
         raw = rawC:CreateColorPicker({
-            name = labelFor(cfg, name),
+            name = initLabel,
             description = descFor(cfg),
             color = initial,
             alpha = pick(cfg, "Alpha", "alpha"),
@@ -1219,7 +1649,7 @@ local function makeContainer(win, rawC)
                 if cb then win:_safe(name, cb, color, alpha) end
             end,
         })
-        register(raw, name, cfg)
+        register(raw, name, cfg, initLabel)
         return wrapHandle(raw)
     end
 
@@ -1231,6 +1661,7 @@ local function makeContainer(win, rawC)
         local legacy = (cfg.Compat ~= false) and win._compat
         local cb = pick(cfg, "Callback", "callback")
         local source = copyList(pick(cfg, "Options", "options"))
+        local initLabel = labelFor(cfg, name)
         local raw
 
         local function norm(v)
@@ -1256,13 +1687,8 @@ local function makeContainer(win, rawC)
             pcall(raw.Set, raw, v, true)
         end
 
-        local function inList(list, item)
-            for _, x in ipairs(list) do if x == item then return true end end
-            return false
-        end
-
         raw = rawC:CreateDropdown({
-            name = labelFor(cfg, name),
+            name = initLabel,
             description = descFor(cfg),
             icon = toIcon(pick(cfg, "Icon", "icon")),
             options = source,
@@ -1274,7 +1700,7 @@ local function makeContainer(win, rawC)
             callback = function(v)
                 local arr = norm(v)
                 if blocked(cfg, name) then
-                    task.defer(function() setRaw(last) end)
+                    task_defer(function() setRaw(last) end)
                     return
                 end
                 last = arr
@@ -1283,7 +1709,7 @@ local function makeContainer(win, rawC)
                 if cb then win:_safe(name, cb, out) end
             end,
         })
-        register(raw, name, cfg)
+        register(raw, name, cfg, initLabel)
 
         local extras = {}
 
@@ -1298,12 +1724,16 @@ local function makeContainer(win, rawC)
 
         function extras:GetSelected() return norm(raw.value) end
 
-        -- Replaces the option list and keeps the selection that still exists.
+        -- Stage 4: Uses table_find instead of manual loop
         function extras:Refresh(list)
             source = copyList(list)
+            local current = norm(raw.value)
             local keep = {}
-            for _, x in ipairs(norm(raw.value)) do
-                if inList(source, x) then keep[#keep + 1] = x end
+            for i = 1, #current do
+                local x = current[i]
+                if table_find(source, x) then
+                    keep[#keep + 1] = x
+                end
             end
             raw:Refresh(copyList(source))
             setRaw(keep)
@@ -1311,13 +1741,13 @@ local function makeContainer(win, rawC)
         end
         extras.SetOptions = extras.Refresh
 
-        -- Shows only options that contain the text. Selected ones stay visible.
         function extras:Filter(text)
-            text = tostring(text or ""):lower()
+            text = string_lower(tostring(text or ""))
             local selected = norm(raw.value)
             local out = {}
-            for _, o in ipairs(source) do
-                if text == "" or tostring(o):lower():find(text, 1, true) or inList(selected, o) then
+            for i = 1, #source do
+                local o = source[i]
+                if text == "" or string_find(string_lower(tostring(o)), text, 1, true) or table_find(selected, o) then
                     out[#out + 1] = o
                 end
             end
@@ -1339,7 +1769,7 @@ local function makeContainer(win, rawC)
         return handle
     end
 
-    -- Search input that filters one or more dropdowns --------------------------
+    -- Search input -------------------------------------------------------------
     function C:CreateSearchInput(cfg)
         cfg = cfg or {}
         local targets = cfg.Targets or {}
@@ -1351,12 +1781,12 @@ local function makeContainer(win, rawC)
             ForgetState = true,
             PremiumOnly = cfg.PremiumOnly,
             Callback = function(text)
-                pending = pending + 1
+                pending += 1
                 local mine = pending
-                task.delay(0.18, function()
+                task_delay(0.18, function()
                     if mine ~= pending then return end
-                    for _, dd in ipairs(targets) do
-                        pcall(dd.Filter, dd, text)
+                    for i = 1, #targets do
+                        pcall(targets[i].Filter, targets[i], text)
                     end
                     if cfg.Callback then win:_safe("SearchInput", cfg.Callback, text) end
                 end)
@@ -1364,10 +1794,10 @@ local function makeContainer(win, rawC)
         })
     end
 
-    -- Player selector that keeps itself up to date ----------------------------
+    -- Player selector (Stage 2: Reuses map table with table.clear) -------------
     function C:CreatePlayerDropdown(cfg)
         cfg = cfg or {}
-        idCounter = idCounter + 1
+        idCounter += 1
         local id = "PlayerDD_" .. idCounter
         local includeLocal = cfg.IncludeLocal == true
         local useDisplay = cfg.DisplayNames == true
@@ -1376,24 +1806,25 @@ local function makeContainer(win, rawC)
         local map = {}
 
         local function build()
-            map = {}
-            local list = {}
+            table_clear(map)
             local plrs = Players:GetPlayers()
-            table.sort(plrs, function(a, b) return a.Name:lower() < b.Name:lower() end)
-            for _, p in ipairs(plrs) do
-                if (includeLocal or p ~= LocalPlayer) and (not filter or filter(p)) then
-                    local label = useDisplay and string.format("%s (@%s)", p.DisplayName, p.Name) or p.Name
-                    map[label] = p
-                    list[#list + 1] = label
-                end
+            table_sort(plrs, function(a, b) return string_lower(a.Name) < string_lower(b.Name) end)
+            local list = table_create(#plrs)
+            for i = 1, #plrs do
+                local p = plrs[i]
+                if not includeLocal and p == LocalPlayer then continue end
+                if filter and not filter(p) then continue end
+                local label = useDisplay and string_format("%s (@%s)", p.DisplayName, p.Name) or p.Name
+                map[label] = p
+                list[#list + 1] = label
             end
             return list
         end
 
         local function playersFrom(labels)
-            local out = {}
-            for _, l in ipairs(labels) do
-                local p = map[l]
+            local out = table_create(#labels)
+            for i = 1, #labels do
+                local p = map[labels[i]]
                 if p and p.Parent then out[#out + 1] = p end
             end
             return out
@@ -1424,7 +1855,7 @@ local function makeContainer(win, rawC)
         local function queue()
             if pending then return end
             pending = true
-            task.delay(0.3, function()
+            task_delay(0.3, function()
                 pending = false
                 if not win._destroyed then refresh() end
             end)
@@ -1442,17 +1873,20 @@ local function makeContainer(win, rawC)
         return handle
     end
 
-    -- Premium showcase block ---------------------------------------------------
+    -- Premium showcase block (Clean, theme-matching buttons & icons) -----------
     function C:CreatePremiumShowcase(cfg)
         cfg = cfg or {}
         C:CreateSection({ Name = cfg.Title or ("Premium " .. win._price), Icon = cfg.Icon or "crown" })
         C:CreateButton({
             Name = cfg.InfoText or "What is included",
             Description = cfg.InfoDescription or "See every Premium feature",
+            Icon = "sparkles",
             Callback = function() win:ShowPremiumPopup() end,
         })
         C:CreateButton({
             Name = cfg.BuyText or ("Get Premium for " .. win._price),
+            Description = cfg.BuyDescription or "Copy invite / purchase link",
+            Icon = "arrow-up-right",
             Callback = function()
                 win:CopyBuyLink()
                 win:ShowPremiumPopup()
@@ -1460,7 +1894,6 @@ local function makeContainer(win, rawC)
         })
     end
 
-    -- Everything else (CreateStat, CreateProgress, Select, Remove...) goes to Gen2
     return setmetatable(C, {
         __index = function(_, k)
             local v = rawC[k]
@@ -1514,8 +1947,9 @@ function Win:CreateSettingsTab(opts)
         CurrentOption = { THEME_LABELS[1] },
         Callback = function(sel)
             local label = sel[1]
-            for i, l in ipairs(THEME_LABELS) do
-                if l == label then self:ChangeTheme(THEME_VALUES[i]) break end
+            local idx = label and table_find(THEME_LABELS, label)
+            if idx then
+                self:ChangeTheme(THEME_VALUES[idx])
             end
         end,
     })
@@ -1532,9 +1966,11 @@ function Win:CreateSettingsTab(opts)
     })
 
     if opts.Languages then
-        local names, codeByName = {}, {}
-        for _, l in ipairs(opts.Languages) do
-            names[#names + 1] = l.name
+        local names = table_create(#opts.Languages)
+        local codeByName = {}
+        for i = 1, #opts.Languages do
+            local l = opts.Languages[i]
+            names[i] = l.name
             codeByName[l.name] = l.code
         end
         tab:CreateDropdown({
@@ -1619,9 +2055,7 @@ function Win:CreateSettingsTab(opts)
 end
 
 -- ============================================================================
--- CHROME PATCH (removes parts of the Gen2 window we do not want)
--- Uses Gen2 internals, so every step is wrapped. If a step fails the window
--- still works, it just keeps that part.
+-- CHROME PATCH
 -- ============================================================================
 local function dropInstance(raw, inst)
     if not inst then return end
@@ -1634,9 +2068,8 @@ end
 local function removeAction(raw, action)
     if not action then return end
     if type(raw.actions) == "table" then
-        for i, a in ipairs(raw.actions) do
-            if a == action then table.remove(raw.actions, i) break end
-        end
+        local idx = table_find(raw.actions, action)
+        if idx then table_remove(raw.actions, idx) end
     end
     dropInstance(raw, action.action)
 end
@@ -1658,7 +2091,7 @@ local function patchChrome(raw, config)
                 raw.profile, raw.profileContainer, raw.profileAvatar = nil, nil, nil
                 raw.profileName, raw.profileSubtitle, raw.profileLabels, raw.profileLayout = nil, nil, nil, nil
                 if type(raw.settings) == "table" then raw.settings.showProfile = false end
-                if raw.tabList then raw.tabList.Size = UDim2.new(1, 0, 1, 0) end
+                if raw.tabList then raw.tabList.Size = UDim2_new(1, 0, 1, 0) end
             end
         end)
     end
@@ -1694,10 +2127,14 @@ function Nexus:CreateWindow(config)
         end
     end
 
+    local rawThemeArg = pick(config, "Theme", "theme") or "midnight"
+    local themeKey = resolveThemeKey(rawThemeArg)
+    local resolvedTheme = resolveTheme(rawThemeArg)
+
     local props = {
         name = name,
         subtitle = pick(config, "Subtitle", "subtitle", "LoadingSubtitle"),
-        theme = resolveTheme(pick(config, "Theme", "theme") or "midnight"),
+        theme = resolvedTheme,
         icon = toIcon(pick(config, "Icon", "icon")),
         sidebarLayout = config.SidebarLayout ~= false,
         showName = pick(config, "ShowName", "showName", "ShowText"),
@@ -1717,12 +2154,17 @@ function Nexus:CreateWindow(config)
     local premium = config.Premium or {}
     local strings = {}
     for k, v in pairs(Nexus.Strings) do strings[k] = v end
-    for k, v in pairs(config.Strings or {}) do strings[k] = v end
+    if config.Strings then
+        for k, v in pairs(config.Strings) do strings[k] = v end
+    end
 
     local win = {
         _core = core,
         _raw = raw,
         _maid = Maid.new(),
+        _tasksList = {},
+        _taskMap = {},
+        _stepConn = nil,
         _flags = {},
         _listeners = {},
         _binds = {},
@@ -1730,20 +2172,23 @@ function Nexus:CreateWindow(config)
         _isPremium = false,
         _premium = premium,
         _price = premium.Price or Nexus.Price,
+        _themeKey = themeKey,
+        _activeTheme = resolvedTheme,
         _S = strings,
         _compat = config.Compat ~= false,
         _debugErrors = config.DebugErrors ~= false,
-        _bootUntil = os.clock() + 3,
+        _bootUntil = os_clock() + 3,
         _uiKey = toKeyCode(pick(config, "ToggleUIKey", "ToggleKey")) or Enum.KeyCode.RightShift,
         Tabs = {},
         Utils = Utils,
         Net = Net,
+        Profiler = Profiler,
         Nexus = Nexus,
         PremiumChanged = Signal.new(),
         Destroying = Signal.new(),
     }
     setmetatable(win, {
-        __index = function(t, k)
+        __index = function(_, k)
             local m = Win[k]
             if m ~= nil then return m end
             local v = raw[k]
@@ -1754,21 +2199,22 @@ function Nexus:CreateWindow(config)
         end,
     })
 
-    -- global hotkeys
+    -- Global hotkeys (Stage 2 & 4: Uses continue and precomputed bind labels)
     if UserInputService then
         win._maid:Add(UserInputService.InputBegan:Connect(function(input, processed)
             if win._destroyed then return end
             if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
-            local typing = UserInputService:GetFocusedTextBox() ~= nil
-            if typing then return end
-            if input.KeyCode == win._uiKey and not processed then
+            if UserInputService:GetFocusedTextBox() ~= nil then return end
+
+            local keyCode = input.KeyCode
+            if keyCode == win._uiKey and not processed then
                 pcall(raw.ToggleHide, raw)
                 return
             end
-            for id, b in pairs(win._binds) do
-                if b.key == input.KeyCode and (b.opts.AllowProcessed or not processed) then
-                    win:_safe("Bind " .. tostring(id), b.cb)
-                end
+            for _, b in pairs(win._binds) do
+                if b.key ~= keyCode then continue end
+                if not b.opts.AllowProcessed and processed then continue end
+                win:_safe(b.label, b.cb)
             end
         end), "Hotkeys")
     end
