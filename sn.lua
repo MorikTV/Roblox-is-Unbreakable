@@ -589,8 +589,8 @@ Nexus.Strings = {
     script_error = "Script error",
     premium_on = "Premium active",
     premium_off = "Free version",
-    tag_free = "FREE",
-    tag_premium = "PREMIUM",
+    tag_free = "Free",
+    tag_premium = "Premium",
 }
 
 -- ============================================================================
@@ -824,7 +824,12 @@ end
 function Win:_updateTag()
     if self._premium.ShowTag == false then return end
     local text = self._isPremium and self._S.tag_premium or self._S.tag_free
-    local color = self._isPremium and Color3.fromRGB(255, 175, 15) or Color3.fromRGB(96, 100, 140)
+    -- Muted colors taken from the Nexus theme so the pill blends in. Override
+    -- with Premium.TagColors = { Free = Color3, Premium = Color3 }.
+    local colors = self._premium.TagColors or {}
+    local color = self._isPremium
+        and (colors.Premium or Color3.fromRGB(82, 70, 176))
+        or (colors.Free or Color3.fromRGB(42, 44, 62))
     if not self._tag then
         local ok, tag = pcall(self._raw.CreateTag, self._raw, { text = text, color = color })
         if ok then self._tag = tag end
