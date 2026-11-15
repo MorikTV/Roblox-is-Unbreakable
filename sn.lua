@@ -68,13 +68,181 @@ local function copyList(t)
     return o
 end
 
+-- Lucide icons as single images (same asset ids Rayfield Gen1 used). Gen2 only
+-- takes asset ids, so names are converted here.
+local ICON_IDS = {
+    ["CD"]=7734110220,["activity"]=7733655755,["airplay"]=7733655834,["alarm-check"]=7733655912,
+    ["alarm-clock"]=7733656100,["alarm-clock-off"]=7733656003,["alarm-minus"]=7733656164,
+    ["alarm-plus"]=7733658066,["album"]=7733658133,["alert-circle"]=7733658271,["alert-octagon"]=7733658335,
+    ["alert-triangle"]=7733658504,["align-center"]=7733909776,["align-center-horizontal"]=8997380477,
+    ["align-center-vertical"]=8997380737,["align-end-horizontal"]=8997380820,["align-end-vertical"]=8997380907,
+    ["align-horizonal-distribute-center"]=8997381028,["align-horizonal-distribute-end"]=8997381144,
+    ["align-horizonal-distribute-start"]=8997381290,["align-horizontal-justify-center"]=8997381461,
+    ["align-horizontal-justify-end"]=8997381549,["align-horizontal-justify-start"]=8997381652,
+    ["align-horizontal-space-around"]=8997381738,["align-horizontal-space-between"]=8997381854,
+    ["align-justify"]=7733661326,["align-left"]=7733911357,["align-right"]=7733663582,
+    ["align-start-horizontal"]=8997381965,["align-start-vertical"]=8997382085,
+    ["align-vertical-distribute-center"]=8997382212,["align-vertical-distribute-end"]=8997382326,
+    ["align-vertical-distribute-start"]=8997382428,["align-vertical-justify-center"]=8997382502,
+    ["align-vertical-justify-end"]=8997382584,["align-vertical-justify-start"]=8997382639,
+    ["align-vertical-space-around"]=8997382708,["align-vertical-space-between"]=8997382793,["anchor"]=7733911490,
+    ["aperture"]=7733666258,["archive"]=7733911621,["arrow-big-down"]=7733668653,["arrow-big-left"]=7733911731,
+    ["arrow-big-right"]=7733671493,["arrow-big-up"]=7733671663,["arrow-down"]=7733672933,
+    ["arrow-down-circle"]=7733671763,["arrow-down-left"]=7733672282,["arrow-down-right"]=7733672831,
+    ["arrow-left"]=7733673136,["arrow-left-circle"]=7733673056,["arrow-left-right"]=8997382869,
+    ["arrow-right"]=7733673345,["arrow-right-circle"]=7733673229,["arrow-up"]=7733673717,
+    ["arrow-up-circle"]=7733673466,["arrow-up-left"]=7733673539,["arrow-up-right"]=7733673646,
+    ["asterisk"]=7733673800,["at-sign"]=7733673907,["award"]=7733673987,["axe"]=7733674079,
+    ["banknote"]=7733674153,["bar-chart"]=7733674319,["bar-chart-2"]=7733674239,["battery"]=7733674820,
+    ["battery-charging"]=7733674402,["battery-full"]=7733674503,["battery-low"]=7733674589,
+    ["battery-medium"]=7733674731,["beaker"]=7733674922,["bell"]=7733911828,["bell-minus"]=7733675028,
+    ["bell-off"]=7733675107,["bell-plus"]=7733675181,["bell-ring"]=7733675275,["bike"]=7733678330,
+    ["binary"]=7733678388,["bluetooth"]=7733687147,["bluetooth-connected"]=7734110952,
+    ["bluetooth-off"]=7733914252,["bluetooth-searching"]=7733914320,["bold"]=7733687211,["book"]=7733914390,
+    ["book-open"]=7733687281,["bookmark"]=7733692043,["bookmark-minus"]=7733689754,["bookmark-plus"]=7734111084,
+    ["bot"]=7733916988,["box"]=7733917120,["box-select"]=7733696665,["briefcase"]=7733919017,["brush"]=7733701455,
+    ["bug"]=7733701545,["building"]=7733701625,["bus"]=7733701715,["calculator"]=7733919105,
+    ["calendar"]=7733919198,["camera"]=7733708692,["camera-off"]=7733919260,["car"]=7733708835,
+    ["carrot"]=8997382987,["cast"]=7733919326,["charge"]=8997383136,["check"]=7733715400,
+    ["check-circle"]=7733919427,["check-circle-2"]=7733710700,["check-square"]=7733919526,
+    ["chevron-down"]=7733717447,["chevron-first"]=8997383275,["chevron-last"]=8997383390,
+    ["chevron-left"]=7733717651,["chevron-right"]=7733717755,["chevron-up"]=7733919605,
+    ["chevrons-down"]=7733720604,["chevrons-down-up"]=7733720483,["chevrons-left"]=7733720701,
+    ["chevrons-right"]=7733919682,["chevrons-up"]=7733723433,["chevrons-up-down"]=7733723321,
+    ["chrome"]=7733919783,["circle"]=7733919881,["circle-slashed"]=8997383530,["clipboard"]=7733734762,
+    ["clipboard-check"]=7733919947,["clipboard-copy"]=7733920037,["clipboard-list"]=7733920117,
+    ["clipboard-x"]=7733734668,["clock"]=7733734848,["clock-1"]=8997383694,["clock-10"]=8997383876,
+    ["clock-11"]=8997384034,["clock-12"]=8997384150,["clock-2"]=8997384295,["clock-3"]=8997384456,
+    ["clock-4"]=8997384603,["clock-5"]=8997384798,["clock-6"]=8997384977,["clock-7"]=8997385147,
+    ["clock-8"]=8997385352,["clock-9"]=8997385485,["cloud"]=7733746980,["cloud-drizzle"]=7733920226,
+    ["cloud-fog"]=7733920317,["cloud-hail"]=7733920444,["cloud-lightning"]=7733741741,["cloud-moon"]=7733920519,
+    ["cloud-off"]=7733745572,["cloud-rain"]=7733746651,["cloud-rain-wind"]=7733746456,["cloud-snow"]=7733746798,
+    ["cloud-sun"]=7733746880,["cloudy"]=7733747106,["clover"]=7733747233,["code"]=7733749837,
+    ["code-2"]=7733920644,["codepen"]=7733920768,["codesandbox"]=7733752575,["coffee"]=7733752630,
+    ["coins"]=7743866529,["columns"]=7733757178,["command"]=7733924046,["compass"]=7733924216,
+    ["contact"]=7743866666,["contrast"]=7733764005,["cookie"]=8997385628,["copy"]=7733764083,
+    ["copyleft"]=7733764196,["copyright"]=7733764275,["corner-down-left"]=7733764327,
+    ["corner-down-right"]=7733764385,["corner-left-down"]=7733764448,["corner-left-up"]=7733764536,
+    ["corner-right-down"]=7733764605,["corner-right-up"]=7733764680,["corner-up-left"]=7733764800,
+    ["corner-up-right"]=7733764915,["cpu"]=7733765045,["crop"]=7733765140,["cross"]=7733765224,
+    ["crosshair"]=7733765307,["crown"]=7733765398,["currency"]=7733765592,["database"]=7743866778,
+    ["delete"]=7733768142,["divide"]=7733769365,["divide-circle"]=7733769152,["divide-square"]=7733769261,
+    ["dollar-sign"]=7733770599,["download"]=7733770755,["download-cloud"]=7733770689,["dribbble"]=7733770843,
+    ["droplet"]=7733770982,["droplets"]=7733771078,["drumstick"]=8997385789,["edit"]=7733771472,
+    ["edit-2"]=7733771217,["edit-3"]=7733771361,["egg"]=8997385940,["electricity"]=7733771628,
+    ["electricity-off"]=7733771563,["equal"]=7733771811,["equal-not"]=7733771726,["euro"]=7733771891,
+    ["expand"]=7733771982,["external-link"]=7743866903,["eye"]=7733774602,["eye-off"]=7733774495,
+    ["fast-forward"]=7743867090,["feather"]=7733777166,["figma"]=7743867310,["file"]=7733793319,
+    ["file-check"]=7733779668,["file-check-2"]=7733779610,["file-code"]=7733779730,["file-digit"]=7733935829,
+    ["file-input"]=7733935917,["file-minus"]=7733936115,["file-minus-2"]=7733936010,["file-output"]=7733788742,
+    ["file-plus"]=7733788885,["file-plus-2"]=7733788816,["file-search"]=7733788966,["file-text"]=7733789088,
+    ["file-x"]=7733938136,["file-x-2"]=7743867554,["files"]=7743867811,["film"]=7733942579,["filter"]=7733798407,
+    ["flag"]=7733798691,["flag-triangle-left"]=7733798509,["flag-triangle-right"]=7733798634,["flame"]=7733798747,
+    ["flashlight"]=7733798851,["flashlight-off"]=7733798799,["flask-conical"]=7733798901,
+    ["flask-round"]=7733798957,["folder"]=7733799185,["folder-minus"]=7733799022,["folder-open"]=8997386062,
+    ["folder-plus"]=7733799092,["form-input"]=7733799275,["forward"]=7733799371,["framer"]=7733799486,
+    ["frown"]=7733799591,["function-square"]=7733799682,["gamepad"]=7733799901,["gamepad-2"]=7733799795,
+    ["gauge"]=7733799969,["gavel"]=7733800044,["gem"]=7733942651,["ghost"]=7743868000,["gift"]=7733946818,
+    ["gift-card"]=7733945018,["git-branch"]=7733949149,["git-branch-plus"]=7743868200,["git-commit"]=7743868360,
+    ["git-merge"]=7733952195,["git-pull-request"]=7733952287,["github"]=7733954058,["gitlab"]=7733954246,
+    ["glasses"]=7733954403,["globe"]=7733954760,["globe-2"]=7733954611,["grab"]=7733954884,
+    ["graduation-cap"]=7733955058,["grid"]=7733955179,["grip-horizontal"]=7733955302,["grip-vertical"]=7733955410,
+    ["hammer"]=7733955511,["hand"]=7733955740,["hand-metal"]=7733955664,["hard-drive"]=7733955793,
+    ["hard-hat"]=7733955850,["hash"]=7733955906,["haze"]=7733955969,["headphones"]=7733956063,
+    ["heart"]=7733956134,["help-circle"]=7733956210,["hexagon"]=7743868527,["highlighter"]=7743868648,
+    ["history"]=7733960880,["home"]=7733960981,["image"]=7733964126,["image-minus"]=7733963797,
+    ["image-off"]=7733963907,["image-plus"]=7733964016,["import"]=7733964240,["inbox"]=7733964370,
+    ["indent"]=7733964452,["indian-rupee"]=7733964536,["infinity"]=7733964640,["info"]=7733964719,
+    ["inspect"]=7733964808,["italic"]=7733964917,["jersey-pound"]=7733965029,["key"]=7733965118,
+    ["landmark"]=7733965184,["languages"]=7733965249,["laptop"]=7733965386,["laptop-2"]=7733965313,
+    ["lasso"]=7733967892,["lasso-select"]=7743868832,["layers"]=7743868936,["layout"]=7733970543,
+    ["layout-dashboard"]=7733970318,["layout-grid"]=7733970390,["layout-list"]=7733970442,
+    ["layout-template"]=7733970494,["library"]=7743869054,["life-buoy"]=7733973479,["lightbulb"]=7733975185,
+    ["lightbulb-off"]=7733975123,["link"]=7733978098,["link-2"]=7743869163,["link-2-off"]=7733975283,
+    ["list"]=7743869612,["list-checks"]=7743869317,["list-minus"]=7733980795,["list-ordered"]=7743869411,
+    ["list-plus"]=7733984995,["list-x"]=7743869517,["loader"]=7733992358,["loader-2"]=7733989869,
+    ["locate"]=7733992469,["locate-fixed"]=7733992424,["lock"]=7733992528,["log-in"]=7733992604,
+    ["log-out"]=7733992677,["mail"]=7733992732,["map"]=7733992829,["map-pin"]=7733992789,["maximize"]=7733992982,
+    ["maximize-2"]=7733992901,["megaphone"]=7733993049,["meh"]=7733993147,["menu"]=7733993211,
+    ["message-circle"]=7733993311,["message-square"]=7733993369,["mic"]=7743869805,["mic-off"]=7743869714,
+    ["minimize"]=7733997941,["minimize-2"]=7733997870,["minus"]=7734000129,["minus-circle"]=7733998053,
+    ["minus-square"]=7743869899,["monitor"]=7734002839,["monitor-off"]=7734000184,["monitor-speaker"]=7743869988,
+    ["moon"]=7743870134,["more-horizontal"]=7734006080,["more-vertical"]=7734006187,["mountain"]=7734008868,
+    ["mountain-snow"]=7743870286,["mouse-pointer"]=7743870392,["mouse-pointer-2"]=7734010405,
+    ["mouse-pointer-click"]=7734010488,["move"]=7743870731,["move-diagonal"]=7743870505,
+    ["move-diagonal-2"]=7734013178,["move-horizontal"]=7734016210,["move-vertical"]=7743870608,
+    ["music"]=7734020554,["navigation"]=7734020989,["navigation-2"]=7734020942,["network"]=7734021047,
+    ["no_entry"]=7734021118,["octagon"]=7734021165,["on-charge"]=7734021231,["option"]=7734021300,
+    ["outdent"]=7734021384,["package"]=7734021469,["package-check"]=8997386143,["package-minus"]=8997386266,
+    ["package-plus"]=8997386355,["package-search"]=8997386448,["package-x"]=8997386545,["palette"]=7734021595,
+    ["paperclip"]=7734021680,["pause"]=7734021897,["pause-circle"]=7734021767,["pause-octagon"]=7734021827,
+    ["pen-tool"]=7734022041,["pencil"]=7734022107,["percent"]=7743870852,["person-standing"]=7743871002,
+    ["phone"]=7734032056,["phone-call"]=7734027264,["phone-forwarded"]=7734027345,["phone-incoming"]=7743871120,
+    ["phone-missed"]=7734029465,["phone-off"]=7734029534,["phone-outgoing"]=7743871253,["pie-chart"]=7734034378,
+    ["piggy-bank"]=7734034513,["pin"]=8997386648,["pipette"]=7743871384,["plane"]=7734037723,["play"]=7743871480,
+    ["play-circle"]=7734037784,["plus"]=7734042071,["plus-circle"]=7734040271,["plus-square"]=7734040369,
+    ["pocket"]=7734042139,["podcast"]=7734042234,["pointer"]=7734042307,["pound-sterling"]=7734042354,
+    ["power"]=7734042493,["power-off"]=7734042423,["printer"]=7734042580,["qr-code"]=7743871575,
+    ["quote"]=7734045100,["radio"]=7743871662,["radio-receiver"]=7734045155,["redo"]=7743871739,
+    ["refresh-ccw"]=7734050715,["refresh-cw"]=7734051052,["regex"]=7734051188,["repeat"]=7734051454,
+    ["repeat-1"]=7734051342,["reply"]=7734051594,["reply-all"]=7734051524,["rewind"]=7734051670,
+    ["rocking-chair"]=7734051769,["rotate-ccw"]=7734051861,["rotate-cw"]=7734051957,["rss"]=7734052075,
+    ["ruler"]=7734052157,["russian-ruble"]=7734052248,["save"]=7734052335,["scale"]=7734052454,
+    ["scan"]=8997386861,["scan-line"]=8997386772,["scissors"]=7734052570,["screen-share"]=7734052814,
+    ["screen-share-off"]=7734052653,["search"]=7734052925,["send"]=7734053039,["separator-horizontal"]=7734053146,
+    ["separator-vertical"]=7734053213,["server"]=7734053426,["server-crash"]=7734053281,["server-off"]=7734053361,
+    ["settings"]=7734053495,["settings-2"]=8997386997,["share"]=7734053697,["share-2"]=7734053595,
+    ["sheet"]=7743871876,["shield"]=7734056608,["shield-alert"]=7734056326,["shield-check"]=7734056411,
+    ["shield-close"]=7734056470,["shield-off"]=7734056540,["shirt"]=7734056672,["shopping-bag"]=7734056747,
+    ["shopping-cart"]=7734056813,["shovel"]=7734056878,["shrink"]=7734056971,["shuffle"]=7734057059,
+    ["sidebar"]=7734058260,["sidebar-close"]=7734058092,["sidebar-open"]=7734058165,["sigma"]=7734058345,
+    ["signal"]=8997387546,["signal-high"]=8997387110,["signal-low"]=8997387189,["signal-medium"]=8997387319,
+    ["signal-zero"]=8997387434,["skip-back"]=7734058404,["skip-forward"]=7734058495,["skull"]=7734058599,
+    ["slash"]=8997387644,["sliders"]=7734058803,["smartphone"]=7734058979,["smartphone-charging"]=7734058894,
+    ["smile"]=7734059095,["snowflake"]=7734059180,["sort-asc"]=7734060715,["sort-desc"]=7743871973,
+    ["speaker"]=7734063416,["sprout"]=7743872071,["square"]=7743872181,["star"]=7734068321,
+    ["star-half"]=7734068258,["stop-circle"]=7734068379,["stretch-horizontal"]=8997387754,
+    ["stretch-vertical"]=8997387862,["strikethrough"]=7734068425,["subscript"]=8997387937,["sun"]=7734068495,
+    ["sunrise"]=7743872365,["sunset"]=7734070982,["superscript"]=8997388036,["swiss-franc"]=7734071038,
+    ["switch-camera"]=7743872492,["table"]=7734073253,["tablet"]=7743872620,["tag"]=7734075797,
+    ["target"]=7743872758,["tent"]=7734078943,["terminal"]=7743872929,["terminal-square"]=7734079055,
+    ["text-cursor"]=8997388195,["text-cursor-input"]=8997388094,["thermometer"]=7734084149,
+    ["thermometer-snowflake"]=7743873074,["thermometer-sun"]=7734084018,["thumbs-down"]=7734084236,
+    ["thumbs-up"]=7743873212,["ticket"]=7734086558,["timer"]=7743873443,["timer-off"]=8997388325,
+    ["timer-reset"]=7743873336,["toggle-left"]=7734091286,["toggle-right"]=7743873539,["tornado"]=7743873633,
+    ["trash"]=7743873871,["trash-2"]=7743873772,["trello"]=7743873996,["trending-down"]=7743874143,
+    ["trending-up"]=7743874262,["triangle"]=7743874367,["truck"]=7743874482,["tv"]=7743874674,["tv-2"]=7743874599,
+    ["type"]=7743874740,["umbrella"]=7743874820,["underline"]=7743874904,["undo"]=7743874974,
+    ["unlink"]=7743875149,["unlink-2"]=7743875069,["unlock"]=7743875263,["upload"]=7743875428,
+    ["upload-cloud"]=7743875358,["user"]=7743875962,["user-check"]=7743875503,["user-minus"]=7743875629,
+    ["user-plus"]=7743875759,["user-x"]=7743875879,["users"]=7743876054,["verified"]=7743876142,
+    ["vibrate"]=7743876302,["video"]=7743876610,["video-off"]=7743876466,["view"]=7743876754,
+    ["voicemail"]=7743876916,["volume"]=7743877487,["volume-1"]=7743877081,["volume-2"]=7743877250,
+    ["volume-x"]=7743877381,["wallet"]=7743877573,["wand"]=8997388430,["watch"]=7743877668,["webcam"]=7743877896,
+    ["wifi"]=7743878148,["wifi-off"]=7743878056,["wind"]=7743878264,["wrap-text"]=8997388548,
+    ["wrench"]=7743878358,["x"]=7743878857,["x-circle"]=7743878496,["x-octagon"]=7743878618,
+    ["x-square"]=7743878737,["zoom-in"]=7743878977,["zoom-out"]=7743879082,
+}
+local ICON_ALIASES = {
+    ["move-3d"] = "move", ["sparkles"] = "wand", ["sparkle"] = "star", ["zap"] = "activity",
+    ["trophy"] = "award", ["sword"] = "axe", ["swords"] = "axe", ["rocket"] = "plane",
+    ["store"] = "shopping-bag", ["pickaxe"] = "hammer", ["pumpkin"] = "ghost",
+    ["backpack"] = "package", ["horse"] = "navigation", ["farm"] = "sprout",
+    ["cog"] = "settings", ["bolt"] = "settings", ["fire"] = "flame", ["dollar"] = "dollar-sign",
+}
+
 local function toIcon(v)
     if type(v) == "number" then
         if v ~= 0 then return v end
         return nil
     end
-    if type(v) == "string" and v:find("^rbx") then return v end
-    return nil -- Gen2 has no Lucide names, so Gen1 style names are dropped
+    if type(v) ~= "string" or v == "" then return nil end
+    if v:find("^rbx") then return v end
+    local key = v:lower()
+    key = ICON_ALIASES[key] or key
+    local id = ICON_IDS[key]
+    if id then return "rbxassetid://" .. id end
+    return nil
 end
 
 local function toKeyCode(v)
@@ -421,8 +589,8 @@ Nexus.Strings = {
     script_error = "Script error",
     premium_on = "Premium active",
     premium_off = "Free version",
-    profile_free = "Free \u{00B7} Premium %s",
-    profile_premium = "Premium",
+    tag_free = "FREE",
+    tag_premium = "PREMIUM",
 }
 
 -- ============================================================================
@@ -652,10 +820,18 @@ function Win:_refreshLocks()
     end
 end
 
-function Win:_updateProfile()
-    if self._premium.ManageProfile == false then return end
-    local text = self._isPremium and self._S.profile_premium or string.format(self._S.profile_free, self._price)
-    pcall(self._raw.SetProfile, self._raw, text)
+-- Shows FREE or PREMIUM as a pill next to the window title.
+function Win:_updateTag()
+    if self._premium.ShowTag == false then return end
+    local text = self._isPremium and self._S.tag_premium or self._S.tag_free
+    local color = self._isPremium and Color3.fromRGB(255, 175, 15) or Color3.fromRGB(96, 100, 140)
+    if not self._tag then
+        local ok, tag = pcall(self._raw.CreateTag, self._raw, { text = text, color = color })
+        if ok then self._tag = tag end
+    else
+        pcall(self._tag.SetText, self._tag, text)
+        pcall(self._tag.SetColor, self._tag, color)
+    end
 end
 
 function Win:_applyPremium(valid, info)
@@ -664,7 +840,7 @@ function Win:_applyPremium(valid, info)
     self.PremiumInfo = info
     if changed then
         self:_refreshLocks()
-        self:_updateProfile()
+        self:_updateTag()
         self.PremiumChanged:Fire(self._isPremium, info)
         self:Toast(self._isPremium and self._S.premium_on or self._S.premium_off)
     end
@@ -1264,7 +1440,7 @@ local function makeContainer(win, rawC)
     -- Premium showcase block ---------------------------------------------------
     function C:CreatePremiumShowcase(cfg)
         cfg = cfg or {}
-        C:CreateSection(cfg.Title or ("\u{1F48E} Premium " .. win._price))
+        C:CreateSection({ Name = cfg.Title or ("Premium " .. win._price), Icon = cfg.Icon or "crown" })
         C:CreateButton({
             Name = cfg.InfoText or "What is included",
             Description = cfg.InfoDescription or "See every Premium feature",
@@ -1323,7 +1499,7 @@ end
 
 function Win:CreateSettingsTab(opts)
     opts = opts or {}
-    local tab = self:CreateTab(opts.Name or "Settings", opts.Icon)
+    local tab = self:CreateTab(opts.Name or "Settings", opts.Icon or "settings")
 
     tab:CreateSection("Appearance")
     tab:CreateDropdown({
@@ -1438,6 +1614,52 @@ function Win:CreateSettingsTab(opts)
 end
 
 -- ============================================================================
+-- CHROME PATCH (removes parts of the Gen2 window we do not want)
+-- Uses Gen2 internals, so every step is wrapped. If a step fails the window
+-- still works, it just keeps that part.
+-- ============================================================================
+local function dropInstance(raw, inst)
+    if not inst then return end
+    if type(raw.DestroySubtree) == "function" then
+        if pcall(raw.DestroySubtree, raw, inst) then return end
+    end
+    pcall(inst.Destroy, inst)
+end
+
+local function removeAction(raw, action)
+    if not action then return end
+    if type(raw.actions) == "table" then
+        for i, a in ipairs(raw.actions) do
+            if a == action then table.remove(raw.actions, i) break end
+        end
+    end
+    dropInstance(raw, action.action)
+end
+
+local function patchChrome(raw, config)
+    if config.ShowMinimise ~= true then
+        pcall(function()
+            removeAction(raw, raw.minimiseAction)
+            raw.ToggleMinimise = function() end
+        end)
+    end
+    if config.HideSettingsButton == true then
+        pcall(function() removeAction(raw, raw.settingsAction) end)
+    end
+    if config.ShowProfile ~= true then
+        pcall(function()
+            if raw.profile then
+                dropInstance(raw, raw.profile)
+                raw.profile, raw.profileContainer, raw.profileAvatar = nil, nil, nil
+                raw.profileName, raw.profileSubtitle, raw.profileLabels, raw.profileLayout = nil, nil, nil, nil
+                if type(raw.settings) == "table" then raw.settings.showProfile = false end
+                if raw.tabList then raw.tabList.Size = UDim2.new(1, 0, 1, 0) end
+            end
+        end)
+    end
+end
+
+-- ============================================================================
 -- CREATE WINDOW
 -- ============================================================================
 function Nexus:CreateWindow(config)
@@ -1473,7 +1695,6 @@ function Nexus:CreateWindow(config)
         theme = resolveTheme(pick(config, "Theme", "theme") or "midnight"),
         icon = toIcon(pick(config, "Icon", "icon")),
         sidebarLayout = config.SidebarLayout ~= false,
-        profile = pick(config, "Profile", "profile"),
         showName = pick(config, "ShowName", "showName", "ShowText"),
         showIcon = toIcon(pick(config, "ShowIcon", "showIcon")),
         showIconOnly = pick(config, "ShowIconOnly", "showIconOnly"),
@@ -1486,6 +1707,7 @@ function Nexus:CreateWindow(config)
 
     local raw = core:CreateWindow(props)
     assert(raw, "[SiriusNexus] Gen2 CreateWindow returned nothing.")
+    patchChrome(raw, config)
 
     local premium = config.Premium or {}
     local strings = {}
@@ -1548,11 +1770,12 @@ function Nexus:CreateWindow(config)
 
     if premium.Verify then win._verifier = premium.Verify end
     if premium.LoadModule then win._loader = premium.LoadModule end
-    win:_updateProfile()
+    win:_updateTag()
 
     Env.Global.__SIRIUS_NEXUS_ACTIVE = win
     return win
 end
 
 Nexus.Win = Win
+Nexus.Icons = { Get = toIcon, Ids = ICON_IDS, Aliases = ICON_ALIASES }
 return Nexus
