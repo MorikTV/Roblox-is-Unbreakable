@@ -1490,18 +1490,61 @@ local function makeContainer(win, rawC)
         return out
     end
 
-    local function replaceLabelText(raw, old, new)
-        if old == nil or old == new then return end
-        for _, inst in ipairs(rawInstances(raw)) do
-            local list = inst:GetDescendants()
-            list[#list + 1] = inst
-            for i = 1, #list do
-                local d = list[i]
-                if (d:IsA("TextLabel") or d:IsA("TextButton")) and d.Text == old then
-                    d.Text = new
+    local function guiRoots()
+        local roots = {}
+        local ok, h = pcall(function() return gethui and gethui() end)
+        if ok and typeof(h) == "Instance" then roots[#roots + 1] = h end
+        local okc, cg = pcall(function() return game:GetService("CoreGui") end)
+        if okc and cg then roots[#roots + 1] = cg end
+        local okp, pg = pcall(function() return game:GetService("Players").LocalPlayer:FindFirstChildOfClass("PlayerGui") end)
+        if okp and pg then roots[#roots + 1] = pg end
+        return roots
+    end
+
+    local function labelText(l)
+        local ok, v = pcall(function() return l.Text end)
+        return ok and v or nil
+    end
+
+    -- Finds the rendered title/content labels of a paragraph by text.
+    local function locateLabels(raw, title, content)
+        local scopes = rawInstances(raw)
+        if #scopes == 0 then scopes = guiRoots() end
+        local function scan(scope)
+            local all = scope:GetDescendants()
+            all[#all + 1] = scope
+            local titles, contents = {}, {}
+            for i = 1, #all do
+                local d = all[i]
+                if d:IsA("TextLabel") or d:IsA("TextButton") then
+                    local tx = labelText(d)
+                    if tx and tx ~= "" then
+                        if title ~= "" and tx == title then titles[#titles + 1] = d end
+                        if content ~= "" and tx == content then contents[#contents + 1] = d end
+                    end
                 end
             end
+            return titles, contents
         end
+        for _, scope in ipairs(scopes) do
+            local titles, contents = scan(scope)
+            if #contents > 0 then
+                -- prefer the content label that shares an ancestor with a title label
+                for _, c in ipairs(contents) do
+                    for _, tl in ipairs(titles) do
+                        local a = c.Parent
+                        for _ = 1, 5 do
+                            if a and tl:IsDescendantOf(a) then return tl, c end
+                            a = a and a.Parent
+                        end
+                    end
+                end
+                return titles[1], contents[1]
+            elseif #titles > 0 then
+                return titles[1], nil
+            end
+        end
+        return nil, nil
     end
 
     function C:CreateParagraph(cfg)
@@ -1518,6 +1561,16 @@ local function makeContainer(win, rawC)
         local shown = { title = title, content = content }
         table_insert(win._translatable, shown)
         local extras = {}
+        local lblT, lblC
+        local function relocate()
+            local a, b = locateLabels(raw, shown.title, shown.content)
+            if a then lblT = a end
+            if b then lblC = b end
+        end
+        task_spawn(function()
+            task_wait(0.4)
+            pcall(relocate)
+        end)
 
         local function push(newTitle, newContent)
             newTitle, newContent = tostring(newTitle or ""), tostring(newContent or "")
@@ -1541,9 +1594,23 @@ local function makeContainer(win, rawC)
                     end
                 end
             end
-            -- Last resort: patch the labels of the rendered element directly
-            pcall(replaceLabelText, raw, oldT, newTitle)
-            pcall(replaceLabelText, raw, oldC, newContent)
+            -- Make sure the rendered labels really show the new text
+            local function apply()
+                if newTitle ~= oldT then
+                    if not (lblT and lblT.Parent) or labelText(lblT) ~= oldT then pcall(relocate) end
+                    if lblT and lblT.Parent and labelText(lblT) == oldT then lblT.Text = newTitle end
+                end
+                if newContent ~= oldC then
+                    if not (lblC and lblC.Parent) or (labelText(lblC) ~= oldC and labelText(lblC) ~= newContent) then
+                        pcall(relocate)
+                    end
+                    if lblC and lblC.Parent and labelText(lblC) ~= newContent then lblC.Text = newContent end
+                end
+            end
+            local okA = pcall(apply)
+            if not done and (not okA or (newContent ~= oldC and not (lblC and lblC.Parent))) then
+                warn("[RIU] Paragraph label not found for update: " .. tostring(oldT))
+            end
             shown.title, shown.content = newTitle, newContent
         end
 
