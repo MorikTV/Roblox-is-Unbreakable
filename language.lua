@@ -14,7 +14,7 @@
 getgenv().TEXT = {}
 
 getgenv().TEXT.en = {
-    window_name="Roblox is Unbreakable | @morik_yt. v%s",loading_title="Roblox is Unbreakable",loading_subtitle="by morik_yt.",
+    window_name="Roblox is Unbreakable v%s",loading_title="Roblox is Unbreakable",loading_subtitle="by morik_yt.",
     tab_home="Home",tab_teleports="Teleports",tab_farm="Farm",tab_skin="Skin Farm",tab_sell="Auto Sell",tab_mob="Mob Farm",tab_outfit="Outfit",tab_sbr="SBR",tab_halloween="Halloween",
     
     sec_language="Language",sec_info="Information",sec_movement="Movement",sec_misc="Misc",sec_app="App",
@@ -98,7 +98,7 @@ getgenv().TEXT.en = {
 }
 
 getgenv().TEXT.ru = {
-    window_name="Roblox is Unbreakable | @morik_yt. v%s",loading_title="Roblox is Unbreakable",loading_subtitle="от morik_yt.",
+    window_name="Roblox is Unbreakable v%s",loading_title="Roblox is Unbreakable",loading_subtitle="от morik_yt.",
     tab_home="Главная",tab_teleports="Телепорты",tab_farm="Фарм",tab_skin="Фарм скинов",tab_sell="Авто продажа",tab_mob="Фарм мобов",tab_outfit="Одежда",tab_sbr="SBR",tab_halloween="Хэллоуин",
     
     sec_language="Язык",sec_info="Информация",sec_movement="Движение",sec_misc="Разное",sec_app="Приложение",
@@ -182,7 +182,7 @@ getgenv().TEXT.ru = {
 }
 
 getgenv().TEXT.de = {
-    window_name="Roblox is Unbreakable | @morik_yt. v%s",loading_title="Roblox is Unbreakable",loading_subtitle="von morik_yt.",
+    window_name="Roblox is Unbreakable v%s",loading_title="Roblox is Unbreakable",loading_subtitle="von morik_yt.",
     tab_home="Start",tab_teleports="Teleport",tab_farm="Farm",tab_skin="Skin-Farm",tab_sell="Auto-Verkauf",tab_mob="Mob-Farm",tab_outfit="Outfit",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="Sprache",sec_info="Information",sec_movement="Bewegung",sec_misc="Sonstiges",sec_app="App",
     lang_label="Oberflächensprache",lang_changed="Sprache gespeichert. Skript neu starten zum Anwenden.",
@@ -254,7 +254,7 @@ getgenv().TEXT.de = {
 }
 
 getgenv().TEXT.fr = {
-    window_name="Roblox is Unbreakable | @morik_yt. v%s",loading_title="Roblox is Unbreakable",loading_subtitle="par morik_yt.",
+    window_name="Roblox is Unbreakable v%s",loading_title="Roblox is Unbreakable",loading_subtitle="par morik_yt.",
     tab_home="Accueil",tab_teleports="Téléports",tab_farm="Farm",tab_skin="Farm de skins",tab_sell="Vente auto",tab_mob="Farm de mobs",tab_outfit="Tenue",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="Langue",sec_info="Information",sec_movement="Déplacement",sec_misc="Divers",sec_app="Application",
     lang_label="Langue de l'interface",lang_changed="Langue sauvegardée. Relancez le script pour appliquer.",
@@ -326,7 +326,7 @@ getgenv().TEXT.fr = {
 }
 
 getgenv().TEXT.es = {
-    window_name="Roblox is Unbreakable | @morik_yt. v%s",loading_title="Roblox is Unbreakable",loading_subtitle="por morik_yt.",
+    window_name="Roblox is Unbreakable v%s",loading_title="Roblox is Unbreakable",loading_subtitle="por morik_yt.",
     tab_home="Inicio",tab_teleports="Teletransportes",tab_farm="Farmear",tab_skin="Farm de skins",tab_sell="Venta auto",tab_mob="Farm de mobs",tab_outfit="Atuendo",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="Idioma",sec_info="Información",sec_movement="Movimiento",sec_misc="Miscelánea",sec_app="Aplicación",
     lang_label="Idioma de la interfaz",lang_changed="Idioma guardado. Vuelve a ejecutar el script para aplicar.",
@@ -398,7 +398,7 @@ getgenv().TEXT.es = {
 }
 
 getgenv().TEXT.pt = {
-    window_name="Roblox is Unbreakable | @morik_yt. v%s",loading_title="Roblox is Unbreakable",loading_subtitle="por morik_yt.",
+    window_name="Roblox is Unbreakable v%s",loading_title="Roblox is Unbreakable",loading_subtitle="por morik_yt.",
     tab_home="Início",tab_teleports="Teleportes",tab_farm="Farm",tab_skin="Farm de skins",tab_sell="Venda auto",tab_mob="Farm de mobs",tab_outfit="Roupa",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="Idioma",sec_info="Informação",sec_movement="Movimento",sec_misc="Diversos",sec_app="Aplicativo",
     lang_label="Idioma da interface",lang_changed="Idioma salvo. Reexecute o script para aplicar.",
@@ -470,7 +470,7 @@ getgenv().TEXT.pt = {
 }
 
 getgenv().TEXT.tr = {
-    window_name="Roblox is Unbreakable | @morik_yt. v%s",loading_title="Roblox is Unbreakable",loading_subtitle="morik_yt. tarafından",
+    window_name="Roblox is Unbreakable v%s",loading_title="Roblox is Unbreakable",loading_subtitle="morik_yt. tarafından",
     tab_home="Ana Sayfa",tab_teleports="Teleport",tab_farm="Farm",tab_skin="Skin Farm",tab_sell="Otomatik Sat",tab_mob="Mob Farm",tab_outfit="Kıyafet",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="Dil",sec_info="Bilgi",sec_movement="Hareket",sec_misc="Diğer",sec_app="Uygulama",
     lang_label="Arayüz Dili",lang_changed="Dil kaydedildi. Uygulamak için scripti yeniden çalıştır.",
@@ -542,7 +542,7 @@ getgenv().TEXT.tr = {
 }
 
 getgenv().TEXT.ja = {
-    window_name="Roblox is Unbreakable | @morik_yt. v%s",loading_title="Roblox is Unbreakable",loading_subtitle="morik_yt. 制作",
+    window_name="Roblox is Unbreakable v%s",loading_title="Roblox is Unbreakable",loading_subtitle="morik_yt. 制作",
     tab_home="ホーム",tab_teleports="テレポート",tab_farm="ファーム",tab_skin="スキンファーム",tab_sell="自動売却",tab_mob="モブファーム",tab_outfit="衣装",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="言語",sec_info="情報",sec_movement="移動",sec_misc="その他",sec_app="アプリ",
     lang_label="インターフェース言語",lang_changed="言語を保存しました。スクリプトを再実行して適用してください。",
@@ -614,7 +614,7 @@ getgenv().TEXT.ja = {
 }
 
 getgenv().TEXT.ko = {
-    window_name="Roblox is Unbreakable | @morik_yt. v%s",loading_title="Roblox is Unbreakable",loading_subtitle="morik_yt. 제작",
+    window_name="Roblox is Unbreakable v%s",loading_title="Roblox is Unbreakable",loading_subtitle="morik_yt. 제작",
     tab_home="홈",tab_teleports="텔레포트",tab_farm="파밍",tab_skin="스킨 파밍",tab_sell="자동 판매",tab_mob="몹 파밍",tab_outfit="의상",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="언어",sec_info="정보",sec_movement="이동",sec_misc="기타",sec_app="앱",
     lang_label="인터페이스 언어",lang_changed="언어가 저장되었습니다. 적용하려면 스크립트를 다시 실행하세요.",
@@ -686,7 +686,7 @@ getgenv().TEXT.ko = {
 }
 
 getgenv().TEXT.zh = {
-    window_name="Roblox is Unbreakable | @morik_yt. v%s",loading_title="Roblox is Unbreakable",loading_subtitle="由 morik_yt. 制作",
+    window_name="Roblox is Unbreakable v%s",loading_title="Roblox is Unbreakable",loading_subtitle="由 morik_yt. 制作",
     tab_home="主页",tab_teleports="传送",tab_farm="刷怪",tab_skin="皮肤农场",tab_sell="自动出售",tab_mob="怪物农场",tab_outfit="服装",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="语言",sec_info="信息",sec_movement="移动",sec_misc="杂项",sec_app="应用",
     lang_label="界面语言",lang_changed="语言已保存。重新执行脚本以应用。",
@@ -759,7 +759,7 @@ getgenv().TEXT.zh = {
 }
 
 getgenv().TEXT.ar = {
-    window_name="Roblox is Unbreakable | @morik_yt. v%s",loading_title="Roblox is Unbreakable",loading_subtitle="بواسطة morik_yt.",
+    window_name="Roblox is Unbreakable v%s",loading_title="Roblox is Unbreakable",loading_subtitle="بواسطة morik_yt.",
     tab_home="الرئيسية",tab_teleports="نقل فوري",tab_farm="زراعة",tab_skin="زراعة السكن",tab_sell="بيع تلقائي",tab_mob="زراعة المخلوقات",tab_outfit="ملابس",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="اللغة",sec_info="معلومات",sec_movement="الحركة",sec_misc="متنوع",sec_app="التطبيق",
     lang_label="لغة الواجهة",lang_changed="تم حفظ اللغة. أعد تشغيل السكريبت للتطبيق.",
@@ -832,7 +832,7 @@ getgenv().TEXT.ar = {
 }
 
 getgenv().TEXT.pl = {
-    window_name="Roblox is Unbreakable | @morik_yt. v%s",loading_title="Roblox is Unbreakable",loading_subtitle="przez morik_yt.",
+    window_name="Roblox is Unbreakable v%s",loading_title="Roblox is Unbreakable",loading_subtitle="przez morik_yt.",
     tab_home="Główna",tab_teleports="Teleporty",tab_farm="Farmienie",tab_skin="Farm skinów",tab_sell="Auto-sprzedaż",tab_mob="Farm mobów",tab_outfit="Strój",tab_sbr="SBR",tab_halloween="Halloween",
     sec_language="Język",sec_info="Informacje",sec_movement="Ruch",sec_misc="Różne",sec_app="Aplikacja",
     lang_label="Język interfejsu",lang_changed="Język zapisany. Uruchom skrypt ponownie, aby zastosować.",
