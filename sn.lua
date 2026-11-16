@@ -1662,6 +1662,7 @@ local function makeContainer(win, rawC)
         local cb = pick(cfg, "Callback", "callback")
         local source = copyList(pick(cfg, "Options", "options"))
         local initLabel = labelFor(cfg, name)
+        local clearOnSelect = pick(cfg, "ClearOnSelect", "clearOnSelect") == true
         local raw
 
         local function norm(v)
@@ -1703,10 +1704,24 @@ local function makeContainer(win, rawC)
                     task_defer(function() setRaw(last) end)
                     return
                 end
+                -- Single mode: clicking the already selected option makes the raw
+                -- control deselect it (empty value). Treat that as a re-select so the
+                -- same item can be picked again without choosing another one first.
+                if not multi and #arr == 0 and #last > 0 then
+                    arr = last
+                    v = arr[1]
+                    task_defer(function() setRaw(arr) end)
+                end
                 last = arr
                 local out = (legacy or multi) and arr or v
                 if flag then win:SetFlag(flag, out) end
                 if cb then win:_safe(name, cb, out) end
+                -- ClearOnSelect: action-style dropdowns (teleport etc.) reset after
+                -- every pick, so any entry, including the same one, can be chosen again.
+                if clearOnSelect and not multi and #arr > 0 then
+                    last = {}
+                    task_defer(function() setRaw({}) end)
+                end
             end,
         })
         register(raw, name, cfg, initLabel)
@@ -1927,6 +1942,136 @@ function Win:CreateSection(a)
     if type(self._raw.CreateSection) == "function" then
         return self._raw:CreateSection(a or {})
     end
+end
+
+-- ============================================================================
+-- SIDEBAR COLLAPSE (hides the tab panel and shrinks the window accordingly)
+-- ============================================================================
+local function guiObj(x) return typeof(x) == "Instance" and x or nil end
+
+function Win:_sidebarParts()
+    local raw = self._raw
+    local list = guiObj(raw.tabList)
+    if not list then return nil end
+    -- walk up to the container that holds both the sidebar and the content area
+    local sidebar = list
+    if guiObj(raw.profile) and raw.profile.Parent == list.Parent then sidebar = list end
+    return list, guiObj(raw.profile)
+end
+
+function Win:_ensureSidebarState()
+    if self._sb then return self._sb end
+    local list, profile = self:_sidebarParts()
+    if not list then return nil end
+    local parent = list.Parent
+    local main = parent
+    -- find the window frame: the nearest ancestor that is wider than the sidebar
+    -- and contains it together with the content siblings
+    local hops = 0
+    while main and main.Parent and hops < 4 and not main:IsA("ScreenGui") do
+        local wider = false
+        if main:IsA("GuiObject") and list.AbsoluteSize.X > 0 then
+            wider = main.AbsoluteSize.X > list.AbsoluteSize.X * 1.5
+        end
+        if wider then break end
+        main = main.Parent
+        hops += 1
+    end
+    if not (main and main:IsA("GuiObject")) then return nil end
+    self._sb = { list = list, profile = profile, parent = parent, main = main, hidden = false, saved = {} }
+    return self._sb
+end
+
+function Win:IsSidebarVisible()
+    return not (self._sb and self._sb.hidden)
+end
+
+function Win:SetSidebarVisible(visible, instant)
+    if self._destroyed then return end
+    local sb = self:_ensureSidebarState()
+    if not sb then return false end
+    local show = visible ~= false
+    if show == (not sb.hidden) then return true end
+    local dur = instant and 0 or 0.28
+    local info = TweenInfo.new(dur, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    local width = sb.width or sb.list.AbsoluteSize.X
+    if not show then sb.width = width end
+    width = sb.width or width
+    if width <= 0 then return false end
+
+    -- everything inside the main frame except the sidebar itself shifts left / grows
+    local function tween(inst, props)
+        if dur == 0 then
+            for k, v in pairs(props) do pcall(function() inst[k] = v end) end
+        else
+            pcall(function() TweenService:Create(inst, info, props):Play() end)
+        end
+    end
+
+    if not show then
+        sb.hidden = true
+        sb.saved = {}
+        sb.mainSize = sb.main.Size
+        sb.mainPos = sb.main.Position
+        -- shrink window from the left edge: right edge stays put, window gets smaller
+        local ms = sb.main.Size
+        tween(sb.main, {
+            Size = UDim2_new(ms.X.Scale, ms.X.Offset - width, ms.Y.Scale, ms.Y.Offset),
+        })
+        for _, c in ipairs(sb.parent:GetChildren()) do
+            if c ~= sb.list and c ~= sb.profile and c:IsA("GuiObject") then
+                local pos, size = c.Position, c.Size
+                sb.saved[c] = { pos = pos, size = size }
+                if c.Position.X.Offset >= width - 2 then
+                    tween(c, { Position = UDim2_new(pos.X.Scale, pos.X.Offset - width, pos.Y.Scale, pos.Y.Offset) })
+                end
+            end
+        end
+        local function hideSide(i) if i then pcall(function() i.Visible = false end) end end
+        if dur == 0 then hideSide(sb.list); hideSide(sb.profile)
+        else task_delay(dur, function() if sb.hidden then hideSide(sb.list); hideSide(sb.profile) end end) end
+    else
+        sb.hidden = false
+        pcall(function() sb.list.Visible = true end)
+        if sb.profile then pcall(function() sb.profile.Visible = true end) end
+        if sb.mainSize then tween(sb.main, { Size = sb.mainSize }) end
+        for c, st in pairs(sb.saved) do
+            if c.Parent then tween(c, { Position = st.pos }) end
+        end
+        sb.saved = {}
+    end
+    if self._sbButton then self._sbButton.Text = sb.hidden and "\u{25B6}" or "\u{25C0}" end
+    return true
+end
+
+function Win:ToggleSidebar()
+    return self:SetSidebarVisible(not self:IsSidebarVisible())
+end
+
+-- Small always-visible handle on the window's left edge that collapses / restores the sidebar.
+function Win:CreateSidebarToggle()
+    if self._sbButton then return self._sbButton end
+    local sb = self:_ensureSidebarState()
+    if not sb then return nil end
+    local btn = Instance.new("TextButton")
+    btn.Name = "NexusSidebarToggle"
+    btn.AutoButtonColor = false
+    btn.Text = "\u{25C0}"
+    btn.TextSize = 12
+    btn.Font = Enum.Font.GothamBold
+    btn.TextColor3 = Color3.fromRGB(235, 235, 245)
+    btn.BackgroundColor3 = Color3.fromRGB(40, 38, 70)
+    btn.BackgroundTransparency = 0.15
+    btn.Size = UDim2_new(0, 18, 0, 42)
+    btn.AnchorPoint = Vector2.new(0, 0.5)
+    btn.Position = UDim2_new(0, -9, 0.5, 0)
+    btn.ZIndex = 50
+    local corner = Instance.new("UICorner"); corner.CornerRadius = UDim.new(0, 6); corner.Parent = btn
+    btn.Parent = sb.main
+    self._sbButton = btn
+    self._maid:Add(btn.MouseButton1Click:Connect(function() self:ToggleSidebar() end), "SidebarToggle")
+    self._maid:Add(btn, "SidebarToggleBtn")
+    return btn
 end
 
 function Win:_configs()
