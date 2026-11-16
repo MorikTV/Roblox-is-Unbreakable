@@ -48,6 +48,7 @@ local string_format = string.format
 local string_lower = string.lower
 local string_find = string.find
 local string_sub = string.sub
+local string_upper = string.upper
 local string_gsub = string.gsub
 
 local task_spawn = task.spawn
@@ -182,7 +183,7 @@ local LocalPlayer      = Players and Players.LocalPlayer
 
 Nexus.Env = Env
 
-local LOCK = "\u{1F512} "
+local LOCK = "[PRO] "
 
 local function pick(t, ...)
     local n = select("#", ...)
@@ -822,6 +823,20 @@ Nexus.Strings = {
     premium_off = "Free version",
     tag_free = "Free",
     tag_premium = "Premium",
+    -- settings tab
+    set_appearance = "Appearance", set_theme = "Theme", set_menu_key = "Menu key",
+    set_language = "Language", set_interface = "Interface",
+    set_sidebar = "Show or hide side panel", set_sidebar_desc = "Collapse the tab list to make the window smaller",
+    set_tutorial = "Show tutorial", set_tutorial_desc = "Replay the quick start guide",
+    set_profiles = "Profiles", set_profile_name = "Profile name", set_saved_profiles = "Saved profiles",
+    set_save = "Save profile", set_load = "Load profile", set_delete = "Delete profile",
+    set_type_name = "Type a name first", set_pick_first = "Pick a profile first",
+    set_saved = "Saved", set_loaded = "Loaded", set_failed = "Failed",
+    set_delete_title = "Delete profile?", set_delete_text = "This removes the profile for good.",
+    set_window = "Window", set_unload = "Unload script", set_unload_title = "Unload?",
+    set_unload_text = "Everything stops and the UI closes.", set_unload_btn = "Unload",
+    cancel = "Cancel", confirm = "Confirm",
+    onb_next = "Next", onb_skip = "Skip", onb_done = "Start",
 }
 
 -- ============================================================================
@@ -1103,16 +1118,16 @@ function Win:Toast(a, b)
     pcall(self._raw.Toast, self._raw, props)
 end
 
-function Win:Success(title, content) self:Notify("\u{2705} " .. tostring(title), content) end
-function Win:Warn(title, content)    self:Notify("\u{26A0} " .. tostring(title), content) end
-function Win:Error(title, content)   self:Notify("\u{274C} " .. tostring(title), content) end
-function Win:Info(title, content)    self:Notify("\u{2139} " .. tostring(title), content) end
+function Win:Success(title, content, dur) self:Notify({ title = tostring(title), content = content, duration = dur, icon = "check-circle" }) end
+function Win:Warn(title, content, dur)    self:Notify({ title = tostring(title), content = content, duration = dur, icon = "alert-triangle" }) end
+function Win:Error(title, content, dur)   self:Notify({ title = tostring(title), content = content, duration = dur, icon = "x-circle" }) end
+function Win:Info(title, content, dur)    self:Notify({ title = tostring(title), content = content, duration = dur, icon = "info" }) end
 
 function Win:Confirm(cfg)
     local opts = {
-        { text = cfg.CancelText or "Cancel" },
+        { text = cfg.CancelText or self._S.cancel },
         {
-            text = cfg.ConfirmText or "Confirm",
+            text = cfg.ConfirmText or self._S.confirm,
             style = cfg.Danger and "danger" or "primary",
             callback = function()
                 if cfg.OnConfirm then self:_safe("Confirm", cfg.OnConfirm) end
@@ -1325,6 +1340,10 @@ function Win:LoadPremiumModule()
 end
 
 function Win:CopyBuyLink()
+    if type(self._premium.OnBuy) == "function" then
+        self:_safe("OnBuy", self._premium.OnBuy, self)
+        return
+    end
     local link = self._premium.Discord
     if link and Utils.Copy(link) then
         self:Toast(self._S.link_copied)
@@ -1343,7 +1362,7 @@ function Win:ShowPremiumPopup(featureName)
                 boxes[#boxes + 1] = {
                     title = pick(f, "title", "Title", 1) or "",
                     description = pick(f, "description", "Description", 2),
-                    icon = toIcon(pick(f, "icon", "Icon")),
+                    icon = toIcon(pick(f, "icon", "Icon", 3)),
                 }
             end
         end
@@ -1422,8 +1441,21 @@ local function makeContainer(win, rawC)
 
     local function flagFor(cfg, name)
         local f = pick(cfg, "Flag", "flag")
-        if f then return f end
-        return (string_gsub(stripLock(name), "%s+", ""))
+        if not f then
+            f = string_gsub(stripLock(tostring(name)), "[^%w]+", "")
+            if f == "" then
+                idCounter += 1
+                f = "Element" .. idCounter
+            end
+        end
+        local used = win._usedFlags
+        if used[f] then
+            local n = 2
+            while used[f .. "_" .. n] do n += 1 end
+            f = f .. "_" .. n
+        end
+        used[f] = true
+        return f
     end
 
     local function noSave(cfg)
@@ -1443,16 +1475,97 @@ local function makeContainer(win, rawC)
         return rawC:CreateDivider(cfg or {})
     end
 
+    local PARA_TITLE_SETTERS = { "SetTitle", "SetName", "SetLabel", "Rename" }
+    local PARA_BODY_SETTERS = { "SetContent", "SetDescription", "SetText", "SetBody", "SetSubtitle" }
+
+    local function rawInstances(raw)
+        local out = {}
+        if typeof(raw) == "Instance" then out[1] = raw return out end
+        if type(raw) ~= "table" then return out end
+        for _, k in ipairs({ "instance", "frame", "container", "root", "holder", "element", "gui", "main", "object", "body", "card" }) do
+            local v = rawget(raw, k)
+            if typeof(v) == "Instance" then out[#out + 1] = v end
+        end
+        if #out == 0 then
+            for _, v in pairs(raw) do
+                if typeof(v) == "Instance" and v:IsA("GuiObject") then out[#out + 1] = v end
+            end
+        end
+        return out
+    end
+
+    local function replaceLabelText(raw, old, new)
+        if old == nil or old == new then return end
+        for _, inst in ipairs(rawInstances(raw)) do
+            local list = inst:GetDescendants()
+            list[#list + 1] = inst
+            for i = 1, #list do
+                local d = list[i]
+                if (d:IsA("TextLabel") or d:IsA("TextButton")) and d.Text == old then
+                    d.Text = new
+                end
+            end
+        end
+    end
+
     function C:CreateParagraph(cfg)
         local title = pick(cfg, "Title", "title", "Name", "name") or ""
         local content = pick(cfg, "Content", "content", "Description", "description") or ""
+        local raw
         if type(rawC.CreateParagraph) == "function" then
-            return rawC:CreateParagraph({ title = title, content = content })
+            raw = rawC:CreateParagraph({ title = title, content = content })
+        elseif type(rawC.CreateLabel) == "function" then
+            raw = rawC:CreateLabel({ name = title, description = content })
+        else
+            raw = rawC:CreateButton({ name = title, description = content, callback = function() end })
         end
-        if type(rawC.CreateLabel) == "function" then
-            return rawC:CreateLabel({ name = title, description = content })
+        local shown = { title = title, content = content }
+        table_insert(win._translatable, shown)
+        local extras = {}
+
+        local function push(newTitle, newContent)
+            newTitle, newContent = tostring(newTitle or ""), tostring(newContent or "")
+            local oldT, oldC = shown.title, shown.content
+            if newTitle == oldT and newContent == oldC then return end
+            local done = false
+            if type(raw.Set) == "function" then
+                done = pcall(raw.Set, raw, { title = newTitle, content = newContent, Title = newTitle, Content = newContent })
+            end
+            if not done then
+                if newTitle ~= oldT then
+                    for i = 1, #PARA_TITLE_SETTERS do
+                        local f = raw[PARA_TITLE_SETTERS[i]]
+                        if type(f) == "function" and pcall(f, raw, newTitle) then done = true break end
+                    end
+                end
+                if newContent ~= oldC then
+                    for i = 1, #PARA_BODY_SETTERS do
+                        local f = raw[PARA_BODY_SETTERS[i]]
+                        if type(f) == "function" and pcall(f, raw, newContent) then done = true break end
+                    end
+                end
+            end
+            -- Last resort: patch the labels of the rendered element directly
+            pcall(replaceLabelText, raw, oldT, newTitle)
+            pcall(replaceLabelText, raw, oldC, newContent)
+            shown.title, shown.content = newTitle, newContent
         end
-        return rawC:CreateButton({ name = title, description = content, callback = function() end })
+
+        function extras:Set(a, b)
+            if type(a) == "table" then
+                local t = pick(a, "Title", "title", "Name", "name")
+                local c = pick(a, "Content", "content", "Description", "description")
+                push(t ~= nil and t or shown.title, c ~= nil and c or shown.content)
+            elseif b ~= nil then
+                push(a, b)
+            elseif a ~= nil then
+                push(shown.title, a)
+            end
+        end
+        function extras:SetTitle(t) push(t, shown.content) end
+        function extras:SetContent(c) push(shown.title, c) end
+        function extras:Get() return shown.title, shown.content end
+        return wrapHandle(raw, extras)
     end
 
     function C:CreateGroup(cfg)
@@ -1656,7 +1769,7 @@ local function makeContainer(win, rawC)
     -- Dropdown -----------------------------------------------------------------
     local function buildDropdown(cfg)
         local name = pick(cfg, "Name", "name") or "Dropdown"
-        local flag = pick(cfg, "Flag", "flag")
+        local flag = flagFor(cfg, name)
         local multi = pick(cfg, "MultipleOptions", "MultiSelect", "multiSelect") == true
         local legacy = (cfg.Compat ~= false) and win._compat
         local cb = pick(cfg, "Callback", "callback")
@@ -1900,11 +2013,11 @@ local function makeContainer(win, rawC)
         })
         C:CreateButton({
             Name = cfg.BuyText or ("Get Premium for " .. win._price),
-            Description = cfg.BuyDescription or "Copy invite / purchase link",
+            Description = cfg.BuyDescription or "Opens the purchase invite",
             Icon = "arrow-up-right",
             Callback = function()
                 win:CopyBuyLink()
-                win:ShowPremiumPopup()
+                if type(win._premium.OnBuy) ~= "function" then win:ShowPremiumPopup() end
             end,
         })
     end
@@ -1947,38 +2060,31 @@ end
 -- ============================================================================
 -- SIDEBAR COLLAPSE (hides the tab panel and shrinks the window accordingly)
 -- ============================================================================
-local function guiObj(x) return typeof(x) == "Instance" and x or nil end
-
-function Win:_sidebarParts()
-    local raw = self._raw
-    local list = guiObj(raw.tabList)
-    if not list then return nil end
-    -- walk up to the container that holds both the sidebar and the content area
-    local sidebar = list
-    if guiObj(raw.profile) and raw.profile.Parent == list.Parent then sidebar = list end
-    return list, guiObj(raw.profile)
-end
+local function guiObj(x) return typeof(x) == "Instance" and x:IsA("GuiObject") and x or nil end
 
 function Win:_ensureSidebarState()
-    if self._sb then return self._sb end
-    local list, profile = self:_sidebarParts()
-    if not list then return nil end
-    local parent = list.Parent
-    local main = parent
-    -- find the window frame: the nearest ancestor that is wider than the sidebar
-    -- and contains it together with the content siblings
-    local hops = 0
-    while main and main.Parent and hops < 4 and not main:IsA("ScreenGui") do
-        local wider = false
-        if main:IsA("GuiObject") and list.AbsoluteSize.X > 0 then
-            wider = main.AbsoluteSize.X > list.AbsoluteSize.X * 1.5
-        end
-        if wider then break end
-        main = main.Parent
-        hops += 1
+    local old = self._sb
+    if old and old.list and old.list.Parent then return old end
+    self._sb = nil
+    local list = guiObj(self._raw.tabList)
+    if not list or not list:IsDescendantOf(game) then return nil end
+    local lw = list.AbsoluteSize.X
+    local lh = list.AbsoluteSize.Y
+    if lw <= 0 or lh <= lw then return nil end -- horizontal tab strip: nothing to collapse
+    local root = list
+    while root.Parent and root.Parent:IsA("GuiObject") and root.Parent.AbsoluteSize.X <= lw * 1.35 do
+        root = root.Parent
     end
-    if not (main and main:IsA("GuiObject")) then return nil end
-    self._sb = { list = list, profile = profile, parent = parent, main = main, hidden = false, saved = {} }
+    local row = root.Parent
+    local main = row
+    while main and main:IsA("GuiObject") and main.AbsoluteSize.X <= lw * 1.6 do main = main.Parent end
+    if not (row and main and main:IsA("GuiObject")) then return nil end
+    local profile = guiObj(self._raw.profile)
+    if profile and profile:IsDescendantOf(root) then profile = nil end
+    self._sb = {
+        list = list, root = root, row = row, main = main, profile = profile,
+        width = root.AbsoluteSize.X, hidden = false, saved = {},
+    }
     return self._sb
 end
 
@@ -1986,92 +2092,239 @@ function Win:IsSidebarVisible()
     return not (self._sb and self._sb.hidden)
 end
 
+local function setProps(inst, props, dur)
+    if dur <= 0 then
+        for k, v in pairs(props) do pcall(function() inst[k] = v end) end
+    else
+        pcall(function()
+            TweenService:Create(inst, TweenInfo.new(dur, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props):Play()
+        end)
+    end
+end
+
+function Win:_placeSidebarButton(dur)
+    local btn, sb = self._sbButton, self._sb
+    if not (btn and sb) then return end
+    local x
+    if sb.hidden then
+        x = 4
+    else
+        local rel = sb.root.AbsolutePosition.X - sb.main.AbsolutePosition.X
+        x = rel + sb.width - 22
+    end
+    setProps(btn, { Position = UDim2_new(0, x, 0.5, 0) }, dur)
+    btn.Text = sb.hidden and "\u{203A}" or "\u{2039}"
+end
+
 function Win:SetSidebarVisible(visible, instant)
-    if self._destroyed then return end
+    if self._destroyed then return false end
     local sb = self:_ensureSidebarState()
     if not sb then return false end
     local show = visible ~= false
     if show == (not sb.hidden) then return true end
-    local dur = instant and 0 or 0.28
-    local info = TweenInfo.new(dur, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-    local width = sb.width or sb.list.AbsoluteSize.X
-    if not show then sb.width = width end
-    width = sb.width or width
-    if width <= 0 then return false end
-
-    -- everything inside the main frame except the sidebar itself shifts left / grows
-    local function tween(inst, props)
-        if dur == 0 then
-            for k, v in pairs(props) do pcall(function() inst[k] = v end) end
-        else
-            pcall(function() TweenService:Create(inst, info, props):Play() end)
-        end
-    end
+    if self._sbBusy and os_clock() < self._sbBusy then return false end
+    local dur = instant and 0 or 0.26
+    self._sbBusy = os_clock() + dur
+    local w = sb.width
+    if w <= 0 then return false end
+    local main = sb.main
 
     if not show then
         sb.hidden = true
         sb.saved = {}
-        sb.mainSize = sb.main.Size
-        sb.mainPos = sb.main.Position
-        -- shrink window from the left edge: right edge stays put, window gets smaller
-        local ms = sb.main.Size
-        tween(sb.main, {
-            Size = UDim2_new(ms.X.Scale, ms.X.Offset - width, ms.Y.Scale, ms.Y.Offset),
-        })
-        for _, c in ipairs(sb.parent:GetChildren()) do
-            if c ~= sb.list and c ~= sb.profile and c:IsA("GuiObject") then
+        sb.mainSize, sb.mainPos = main.Size, main.Position
+        local ms, mp, ax = main.Size, main.Position, main.AnchorPoint.X
+        -- Keep the right edge in place: the window gets smaller, content does not move.
+        setProps(main, {
+            Size = UDim2_new(ms.X.Scale, ms.X.Offset - w, ms.Y.Scale, ms.Y.Offset),
+            Position = UDim2_new(mp.X.Scale, mp.X.Offset + w * (1 - ax), mp.Y.Scale, mp.Y.Offset),
+        }, dur)
+        local children = sb.row:GetChildren()
+        local layouted = sb.row:FindFirstChildWhichIsA("UIListLayout") ~= nil
+        for i = 1, #children do
+            local c = children[i]
+            if c:IsA("GuiObject") and c ~= sb.root and c ~= sb.btn then
                 local pos, size = c.Position, c.Size
                 sb.saved[c] = { pos = pos, size = size }
-                if c.Position.X.Offset >= width - 2 then
-                    tween(c, { Position = UDim2_new(pos.X.Scale, pos.X.Offset - width, pos.Y.Scale, pos.Y.Offset) })
+                local props = {}
+                if not layouted and pos.X.Offset >= w - 3 then
+                    props.Position = UDim2_new(pos.X.Scale, pos.X.Offset - w, pos.Y.Scale, pos.Y.Offset)
                 end
+                if size.X.Scale > 0 and size.X.Offset <= 0 then
+                    props.Size = UDim2_new(size.X.Scale, size.X.Offset + w, size.Y.Scale, size.Y.Offset)
+                end
+                if next(props) then setProps(c, props, dur) end
             end
         end
-        local function hideSide(i) if i then pcall(function() i.Visible = false end) end end
-        if dur == 0 then hideSide(sb.list); hideSide(sb.profile)
-        else task_delay(dur, function() if sb.hidden then hideSide(sb.list); hideSide(sb.profile) end end) end
+        local function finish()
+            if not sb.hidden then return end
+            pcall(function() sb.root.Visible = false end)
+            if sb.profile then pcall(function() sb.profile.Visible = false end) end
+        end
+        if dur <= 0 then finish() else task_delay(dur, finish) end
     else
         sb.hidden = false
-        pcall(function() sb.list.Visible = true end)
+        pcall(function() sb.root.Visible = true end)
         if sb.profile then pcall(function() sb.profile.Visible = true end) end
-        if sb.mainSize then tween(sb.main, { Size = sb.mainSize }) end
+        do
+            local cs, cp, ax = main.Size, main.Position, main.AnchorPoint.X
+            setProps(main, {
+                Size = UDim2_new(cs.X.Scale, cs.X.Offset + w, cs.Y.Scale, cs.Y.Offset),
+                Position = UDim2_new(cp.X.Scale, cp.X.Offset - w * (1 - ax), cp.Y.Scale, cp.Y.Offset),
+            }, dur)
+        end
         for c, st in pairs(sb.saved) do
-            if c.Parent then tween(c, { Position = st.pos }) end
+            if c.Parent then setProps(c, { Position = st.pos, Size = st.size }, dur) end
         end
         sb.saved = {}
     end
-    if self._sbButton then self._sbButton.Text = sb.hidden and "\u{25B6}" or "\u{25C0}" end
+    self:_placeSidebarButton(dur)
     return true
 end
 
 function Win:ToggleSidebar()
-    return self:SetSidebarVisible(not self:IsSidebarVisible())
+    local ok = self:SetSidebarVisible(not self:IsSidebarVisible())
+    if ok and not self._sbButton then pcall(self.CreateSidebarToggle, self) end
+    return ok
 end
 
--- Small always-visible handle on the window's left edge that collapses / restores the sidebar.
+-- Small handle on the window that collapses / restores the side panel.
 function Win:CreateSidebarToggle()
-    if self._sbButton then return self._sbButton end
+    if self._sbButton and self._sbButton.Parent then return self._sbButton end
     local sb = self:_ensureSidebarState()
     if not sb then return nil end
     local btn = Instance.new("TextButton")
     btn.Name = "NexusSidebarToggle"
     btn.AutoButtonColor = false
-    btn.Text = "\u{25C0}"
-    btn.TextSize = 12
+    btn.Text = "\u{2039}"
+    btn.TextSize = 18
     btn.Font = Enum.Font.GothamBold
-    btn.TextColor3 = Color3.fromRGB(235, 235, 245)
-    btn.BackgroundColor3 = Color3.fromRGB(40, 38, 70)
-    btn.BackgroundTransparency = 0.15
-    btn.Size = UDim2_new(0, 18, 0, 42)
+    btn.TextColor3 = rgb(225, 225, 240)
+    btn.BackgroundColor3 = rgb(36, 34, 60)
+    btn.BackgroundTransparency = 0.25
+    btn.BorderSizePixel = 0
+    btn.Size = UDim2_new(0, 16, 0, 40)
     btn.AnchorPoint = Vector2.new(0, 0.5)
-    btn.Position = UDim2_new(0, -9, 0.5, 0)
-    btn.ZIndex = 50
-    local corner = Instance.new("UICorner"); corner.CornerRadius = UDim.new(0, 6); corner.Parent = btn
+    btn.ZIndex = 999
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = btn
     btn.Parent = sb.main
+    sb.btn = btn
     self._sbButton = btn
+    self:_placeSidebarButton(0)
+    btn.MouseEnter:Connect(function() setProps(btn, { BackgroundTransparency = 0.05 }, 0.12) end)
+    btn.MouseLeave:Connect(function() setProps(btn, { BackgroundTransparency = 0.25 }, 0.12) end)
     self._maid:Add(btn.MouseButton1Click:Connect(function() self:ToggleSidebar() end), "SidebarToggle")
     self._maid:Add(btn, "SidebarToggleBtn")
     return btn
+end
+
+-- ============================================================================
+-- LIVE LANGUAGE SWITCH (swaps every visible string without re-executing)
+-- ============================================================================
+function Win:SetStrings(map)
+    if type(map) ~= "table" then return end
+    for k, v in pairs(map) do self._S[k] = v end
+    self:_updateTag()
+end
+
+function Win:Retranslate(fromMap, toMap)
+    if self._destroyed or type(fromMap) ~= "table" or type(toMap) ~= "table" then return false end
+    local rev = {}
+    for key, old in pairs(fromMap) do
+        local new = toMap[key]
+        if type(old) == "string" and type(new) == "string" and old ~= new and old ~= "" and #old < 600 then
+            if rev[old] == nil then rev[old] = new end
+            local up = string_upper(old)
+            if up ~= old and rev[up] == nil then rev[up] = string_upper(new) end
+        end
+    end
+    for i = 1, #self._translatable do
+        local sh = self._translatable[i]
+        sh.title = rev[sh.title] or sh.title
+        sh.content = rev[sh.content] or sh.content
+    end
+    local gui = self._raw and guiObj(self._raw.tabList)
+    gui = gui and gui:FindFirstAncestorOfClass("ScreenGui") or nil
+    if not gui then return false end
+    self._retransToken = (self._retransToken or 0) + 1
+    local token = self._retransToken
+    task_spawn(function()
+        local list = gui:GetDescendants()
+        for i = 1, #list do
+            if token ~= self._retransToken or self._destroyed then return end
+            local d = list[i]
+            if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then
+                local t = d.Text
+                if t ~= "" then
+                    local hit = rev[t]
+                    if hit then
+                        d.Text = hit
+                    elseif string_sub(t, 1, #LOCK) == LOCK then
+                        local inner = rev[string_sub(t, #LOCK + 1)]
+                        if inner then d.Text = LOCK .. inner end
+                    end
+                end
+                if d:IsA("TextBox") then
+                    local ph = rev[d.PlaceholderText]
+                    if ph then d.PlaceholderText = ph end
+                end
+            end
+            if i % 350 == 0 then task_wait() end
+        end
+    end)
+    return true
+end
+
+-- ============================================================================
+-- ONBOARDING (first-run guide shown as chained popups)
+-- ============================================================================
+function Win:ShowOnboarding(cfg, force)
+    cfg = cfg or {}
+    local steps = cfg.Steps
+    if type(steps) ~= "table" or #steps == 0 then return false end
+    local marker = cfg.Marker
+    if not force and marker and type(isfile) == "function" and isfile(marker) then return false end
+    local function mark()
+        if marker and type(writefile) == "function" then pcall(writefile, marker, "1") end
+    end
+    local S = self._S
+    local function show(i)
+        local step = steps[i]
+        if not step or self._destroyed then mark() return end
+        local boxes = {}
+        for n = 1, #(step.boxes or {}) do
+            local b = step.boxes[n]
+            boxes[n] = { title = b[1] or b.title, description = b[2] or b.description, icon = toIcon(b[3] or b.icon) }
+        end
+        local last = i == #steps
+        local options = {}
+        if not last then
+            options[#options + 1] = { text = S.onb_skip, callback = mark }
+        end
+        for n = 1, #(step.actions or {}) do
+            local a = step.actions[n]
+            options[#options + 1] = {
+                text = a.text, style = a.style,
+                callback = function() self:_safe("OnboardingAction", a.callback) end,
+            }
+        end
+        options[#options + 1] = {
+            text = last and S.onb_done or S.onb_next,
+            style = "primary",
+            callback = function()
+                if last then mark() return end
+                task_delay(0.3, function() show(i + 1) end)
+            end,
+        }
+        pcall(self._raw.Popup, self._raw, {
+            title = step.title, subtitle = step.subtitle, content = step.content,
+            boxes = #boxes > 0 and boxes or nil, options = options,
+        })
+    end
+    task_delay(cfg.Delay or 0.8, function() show(1) end)
+    return true
 end
 
 function Win:_configs()
@@ -2082,31 +2335,17 @@ end
 
 function Win:CreateSettingsTab(opts)
     opts = opts or {}
+    local S = self._S
     local tab = self:CreateTab(opts.Name or "Settings", opts.Icon or "settings")
 
-    tab:CreateSection("Appearance")
+    tab:CreateSection({ Name = S.set_appearance, Icon = "palette" })
+    local curTheme = THEME_LABELS[table_find(THEME_VALUES, self._themeKey) or 1]
     tab:CreateDropdown({
-        Name = "Theme",
-        Flag = "Nexus_Theme",
-        Options = THEME_LABELS,
-        CurrentOption = { THEME_LABELS[1] },
+        Name = S.set_theme, Flag = "Nexus_Theme", Icon = "palette",
+        Options = THEME_LABELS, CurrentOption = { curTheme },
         Callback = function(sel)
-            local label = sel[1]
-            local idx = label and table_find(THEME_LABELS, label)
-            if idx then
-                self:ChangeTheme(THEME_VALUES[idx])
-            end
-        end,
-    })
-
-    local keyNames = { "RightShift", "RightControl", "LeftAlt", "Insert", "Delete", "K", "F6" }
-    tab:CreateDropdown({
-        Name = "Menu key",
-        Flag = "Nexus_MenuKey",
-        Options = keyNames,
-        CurrentOption = { "RightShift" },
-        Callback = function(sel)
-            if sel[1] then self:SetToggleKey(sel[1]) end
+            local idx = sel[1] and table_find(THEME_LABELS, sel[1])
+            if idx then self:ChangeTheme(THEME_VALUES[idx]) end
         end,
     })
 
@@ -2119,10 +2358,10 @@ function Win:CreateSettingsTab(opts)
             codeByName[l.name] = l.code
         end
         tab:CreateDropdown({
-            Name = opts.LanguageLabel or "Language",
-            Flag = "Nexus_Language",
+            Name = S.set_language, Flag = "Nexus_Language", Icon = "languages",
             Options = names,
             CurrentOption = opts.CurrentLanguage and { opts.CurrentLanguage } or {},
+            ForgetState = true,
             Callback = function(sel)
                 local code = sel[1] and codeByName[sel[1]]
                 if not code then return end
@@ -2130,51 +2369,66 @@ function Win:CreateSettingsTab(opts)
                 if opts.OnLanguage then opts.OnLanguage(code) end
             end,
         })
+        self._languageNames = names
     end
 
-    tab:CreateSection("Profiles")
+    tab:CreateSection({ Name = S.set_interface, Icon = "layout-dashboard" })
+    local keyNames = { "RightShift", "RightControl", "LeftAlt", "Insert", "Delete", "K", "F6" }
+    local curKey = (self._uiKey and self._uiKey.Name) or "RightShift"
+    if not table_find(keyNames, curKey) then table_insert(keyNames, curKey) end
+    tab:CreateDropdown({
+        Name = S.set_menu_key, Flag = "Nexus_MenuKey", Icon = "key",
+        Options = keyNames, CurrentOption = { curKey },
+        Callback = function(sel) if sel[1] then self:SetToggleKey(sel[1]) end end,
+    })
+    tab:CreateButton({
+        Name = S.set_sidebar, Description = S.set_sidebar_desc, Icon = "sidebar-close",
+        Callback = function() self:ToggleSidebar() end,
+    })
+    if self._onboarding then
+        tab:CreateButton({
+            Name = S.set_tutorial, Description = S.set_tutorial_desc, Icon = "book-open",
+            Callback = function() self:ShowOnboarding(self._onboarding, true) end,
+        })
+    end
+
+    tab:CreateSection({ Name = S.set_profiles, Icon = "save" })
     local cfgName, picked = "", nil
     tab:CreateInput({
-        Name = "Profile name",
-        PlaceholderText = "my-profile",
-        ForgetState = true,
+        Name = S.set_profile_name, PlaceholderText = "my-profile", ForgetState = true,
         Callback = function(t) cfgName = t end,
     })
     local list = tab:CreateDropdown({
-        Name = "Saved profiles",
-        Options = self:_configs(),
-        ForgetState = true,
+        Name = S.set_saved_profiles, Options = self:_configs(), ForgetState = true,
         Callback = function(sel) picked = sel[1] end,
     })
     tab:CreateButton({
-        Name = "Save profile",
+        Name = S.set_save, Icon = "save",
         Callback = function()
             local n = (cfgName ~= "" and cfgName) or picked
-            if not n then self:Warn("Profiles", "Type a name first") return end
+            if not n then self:Warn(S.set_profiles, S.set_type_name) return end
             local ok = pcall(self._raw.Save, self._raw, n)
-            if ok then self:Success("Profiles", "Saved " .. n) else self:Error("Profiles", "Save failed") end
+            if ok then self:Success(S.set_profiles, S.set_saved .. ": " .. n) else self:Error(S.set_profiles, S.set_failed) end
             list:Refresh(self:_configs())
         end,
     })
     tab:CreateButton({
-        Name = "Load profile",
+        Name = S.set_load, Icon = "download",
         Callback = function()
             local n = picked or (cfgName ~= "" and cfgName)
-            if not n then self:Warn("Profiles", "Pick a profile first") return end
+            if not n then self:Warn(S.set_profiles, S.set_pick_first) return end
             local ok = pcall(self._raw.Load, self._raw, n)
-            if ok then self:Success("Profiles", "Loaded " .. n) else self:Error("Profiles", "Load failed") end
+            if ok then self:Success(S.set_profiles, S.set_loaded .. ": " .. n) else self:Error(S.set_profiles, S.set_failed) end
         end,
     })
     tab:CreateButton({
-        Name = "Delete profile",
+        Name = S.set_delete, Icon = "trash-2",
         Callback = function()
             local n = picked
-            if not n then self:Warn("Profiles", "Pick a profile first") return end
+            if not n then self:Warn(S.set_profiles, S.set_pick_first) return end
             self:Confirm({
-                Title = "Delete profile?",
-                Content = "This removes " .. n .. " for good.",
-                ConfirmText = "Delete",
-                Danger = true,
+                Title = S.set_delete_title, Content = S.set_delete_text .. " (" .. n .. ")",
+                ConfirmText = S.set_delete, Danger = true,
                 OnConfirm = function()
                     pcall(self._raw.DeleteConfig, self._raw, n)
                     list:Refresh(self:_configs())
@@ -2183,15 +2437,13 @@ function Win:CreateSettingsTab(opts)
         end,
     })
 
-    tab:CreateSection("Window")
+    tab:CreateSection({ Name = S.set_window, Icon = "power" })
     tab:CreateButton({
-        Name = "Unload script",
+        Name = S.set_unload, Icon = "log-out",
         Callback = function()
             self:Confirm({
-                Title = "Unload?",
-                Content = "Everything stops and the UI closes.",
-                ConfirmText = "Unload",
-                Danger = true,
+                Title = S.set_unload_title, Content = S.set_unload_text,
+                ConfirmText = S.set_unload_btn, Danger = true,
                 OnConfirm = function() self:Destroy() end,
             })
         end,
@@ -2311,6 +2563,8 @@ function Nexus:CreateWindow(config)
         _taskMap = {},
         _stepConn = nil,
         _flags = {},
+        _usedFlags = {},
+        _translatable = {},
         _listeners = {},
         _binds = {},
         _lockables = {},
@@ -2367,6 +2621,17 @@ function Nexus:CreateWindow(config)
     if premium.Verify then win._verifier = premium.Verify end
     if premium.LoadModule then win._loader = premium.LoadModule end
     win:_updateTag()
+
+    win._onboarding = config.Onboarding
+    if config.SidebarToggle ~= false and config.SidebarLayout ~= false then
+        task_spawn(function()
+            for _ = 1, 80 do
+                task_wait(0.25)
+                if win._destroyed then return end
+                if win:CreateSidebarToggle() then return end
+            end
+        end)
+    end
 
     Env.Global.__SIRIUS_NEXUS_ACTIVE = win
     return win
