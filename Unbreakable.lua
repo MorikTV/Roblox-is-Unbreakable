@@ -6,8 +6,9 @@
 --getgenv().syn = false
 
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/MorikTV/Roblox-is-Unbreakable/refs/heads/main/language.lua", true))()
-task.wait(0.5)
+--loadstring(game:HttpGet("https://raw.githubusercontent.com/MorikTV/Roblox-is-Unbreakable/refs/heads/main/language.lua", true))()
+--task.wait(0.5)
+
 loadstring(game:HttpGet("https://raw.githubusercontent.com/MorikTV/Roblox-is-Unbreakable/refs/heads/main/paid.lua", true))()
 
 --getgenv().syn = syn
