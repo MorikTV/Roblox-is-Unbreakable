@@ -2440,6 +2440,61 @@ function Nexus:CreateWindow(config)
     if premium.LoadModule then win._loader = premium.LoadModule end
     win:_updateTag()
 
+    -- Truncation fixer: any label whose text does not fit gets wrapped instead of cut.
+    if config.FixTruncation ~= false then
+        task_spawn(function()
+            local gui
+            for _ = 1, 20 do
+                local ok, g = pcall(function() return raw.tabList and raw.tabList:FindFirstAncestorOfClass("ScreenGui") end)
+                if ok and g then gui = g break end
+                task_wait(0.25)
+            end
+            if not gui then return end
+            local TextService = game:GetService("TextService")
+            local pending, queued = {}, false
+            local function fixLabel(l)
+                if not l.Parent or l:GetAttribute("NxFixed") then return end
+                if l.Text == "" or l.AbsoluteSize.X < 8 then return end
+                if l.TextTruncate == Enum.TextTruncate.None and l.TextWrapped then return end
+                local ok, sz = pcall(function()
+                    return TextService:GetTextSize(l.Text, l.TextSize, l.Font, Vector2.new(100000, 100000))
+                end)
+                if not ok or sz.X <= l.AbsoluteSize.X + 1 then return end
+                l:SetAttribute("NxFixed", true)
+                l.TextTruncate = Enum.TextTruncate.None
+                l.TextWrapped = true
+                if l.AutomaticSize == Enum.AutomaticSize.None and l.Size.Y.Scale == 0 then
+                    l.AutomaticSize = Enum.AutomaticSize.Y
+                end
+                local p = l.Parent
+                for _ = 1, 3 do
+                    if not p or not p:IsA("GuiObject") or p:IsA("ScrollingFrame") then break end
+                    if p.AutomaticSize == Enum.AutomaticSize.None and p.Size.Y.Scale == 0 then
+                        p.AutomaticSize = Enum.AutomaticSize.Y
+                    end
+                    p = p.Parent
+                end
+            end
+            local function flush()
+                queued = false
+                local batch = pending
+                pending = {}
+                for l in pairs(batch) do pcall(fixLabel, l) end
+            end
+            local function consider(d)
+                if d:IsA("TextLabel") or d:IsA("TextButton") then
+                    pending[d] = true
+                    if not queued then
+                        queued = true
+                        task_delay(0.15, flush)
+                    end
+                end
+            end
+            win._maid:Add(gui.DescendantAdded:Connect(consider), "TruncFix")
+            for _, d in ipairs(gui:GetDescendants()) do consider(d) end
+        end)
+    end
+
     Env.Global.__SIRIUS_NEXUS_ACTIVE = win
     return win
 end
