@@ -2526,3 +2526,5 @@ __merge("ru", {
     tear_none="На этом сервере нет спавнера Dimensional Tears.",
     tear_timeout="Таймаут разрыва (сек)",
 })
+__merge("en", { skin_include_default="Include Default Skin (stand without skin)" })
+__merge("ru", { skin_include_default="Добавлять Default скин (стенд без скина)" })
