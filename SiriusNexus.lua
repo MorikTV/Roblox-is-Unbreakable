@@ -2452,27 +2452,38 @@ function Nexus:CreateWindow(config)
             if not gui then return end
             local TextService = game:GetService("TextService")
             local pending, queued = {}, false
+            -- Gen2 labels have fixed sizes (e.g. 170x16 option labels with TextWrapped),
+            -- so long text is clipped. Grow the label and its fixed-height parents.
             local function fixLabel(l)
-                if not l.Parent or l:GetAttribute("NxFixed") then return end
-                if l.Text == "" or l.AbsoluteSize.X < 8 then return end
-                if l.TextTruncate == Enum.TextTruncate.None and l.TextWrapped then return end
+                if not l.Parent then return end
+                local text = l.Text
+                if text == "" or l.AbsoluteSize.X < 8 or l.TextSize < 6 then return end
+                if l:GetAttribute("NxT") == text then return end
                 local ok, sz = pcall(function()
-                    return TextService:GetTextSize(l.Text, l.TextSize, l.Font, Vector2.new(100000, 100000))
+                    return TextService:GetTextSize(text, l.TextSize, l.Font, Vector2.new(100000, 100000))
                 end)
-                if not ok or sz.X <= l.AbsoluteSize.X + 1 then return end
-                l:SetAttribute("NxFixed", true)
-                l.TextTruncate = Enum.TextTruncate.None
-                l.TextWrapped = true
-                if l.AutomaticSize == Enum.AutomaticSize.None and l.Size.Y.Scale == 0 then
-                    l.AutomaticSize = Enum.AutomaticSize.Y
+                if not ok then return end
+                local absX, absY = l.AbsoluteSize.X, l.AbsoluteSize.Y
+                if sz.X <= absX + 1 and l.TextWrapped == false then
+                    l:SetAttribute("NxT", text)
+                    return
                 end
-                local p = l.Parent
+                if l.TextTruncate ~= Enum.TextTruncate.None then l.TextTruncate = Enum.TextTruncate.None end
+                if not l.TextWrapped then l.TextWrapped = true end
+                local ok2, wrapped = pcall(function()
+                    return TextService:GetTextSize(text, l.TextSize, l.Font, Vector2.new(absX, 100000))
+                end)
+                if not ok2 then return end
+                local grow = math.ceil(wrapped.Y - absY)
+                l:SetAttribute("NxT", text)
+                if grow <= 1 then return end
+                local node = l
                 for _ = 1, 3 do
-                    if not p or not p:IsA("GuiObject") or p:IsA("ScrollingFrame") then break end
-                    if p.AutomaticSize == Enum.AutomaticSize.None and p.Size.Y.Scale == 0 then
-                        p.AutomaticSize = Enum.AutomaticSize.Y
+                    if not node or not node:IsA("GuiObject") or node:IsA("ScrollingFrame") then break end
+                    if node.Size.Y.Scale == 0 and node.AutomaticSize == Enum.AutomaticSize.None then
+                        node.Size = UDim2.new(node.Size.X.Scale, node.Size.X.Offset, 0, node.Size.Y.Offset + grow)
                     end
-                    p = p.Parent
+                    node = node.Parent
                 end
             end
             local function flush()
@@ -2484,6 +2495,16 @@ function Nexus:CreateWindow(config)
             local function consider(d)
                 if d:IsA("TextLabel") or d:IsA("TextButton") then
                     pending[d] = true
+                    if not d:GetAttribute("NxHooked") then
+                        d:SetAttribute("NxHooked", true)
+                        d:GetPropertyChangedSignal("Text"):Connect(function()
+                            pending[d] = true
+                            if not queued then
+                                queued = true
+                                task_delay(0.15, flush)
+                            end
+                        end)
+                    end
                     if not queued then
                         queued = true
                         task_delay(0.15, flush)
@@ -2492,6 +2513,17 @@ function Nexus:CreateWindow(config)
             end
             win._maid:Add(gui.DescendantAdded:Connect(consider), "TruncFix")
             for _, d in ipairs(gui:GetDescendants()) do consider(d) end
+            -- labels that were hidden (size 0) when created get re-checked once visible
+            while not win._destroyed and gui.Parent do
+                task_wait(2)
+                for _, d in ipairs(gui:GetDescendants()) do
+                    if (d:IsA("TextLabel") or d:IsA("TextButton")) and d.AbsoluteSize.X >= 8
+                        and d.Text ~= "" and d:GetAttribute("NxT") ~= d.Text then
+                        pending[d] = true
+                        if not queued then queued = true; task_delay(0.15, flush) end
+                    end
+                end
+            end
         end)
     end
 
