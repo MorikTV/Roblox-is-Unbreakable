@@ -2367,3 +2367,139 @@ __merge("pl", {
     nx_onb_skip = "Pomiń",
     nx_onb_done = "Start",
 })
+
+-- ============================================================================
+-- Inbox & Skin Farm Settings translations
+-- ============================================================================
+__merge("en", {
+    sec_skin_farm_settings="Skin Farm Settings",
+    sec_inbox="Inbox & Rewards",
+    inbox_refresh="Refresh Reward List",
+    inbox_select_items="Select Items to Claim",
+    inbox_claim_selected="Claim Selected Items",
+    inbox_gathering="Fetching inbox messages...",
+    inbox_gathered="Done! Unclaimed messages: %s",
+    inbox_claiming="Claiming rewards...",
+    inbox_done="Claiming complete! Claimed: %s",
+})
+__merge("ru", {
+    sec_skin_farm_settings="Настройки фарма скинов",
+    sec_inbox="Почта и награды",
+    inbox_refresh="Обновить список наград",
+    inbox_select_items="Выбрать предметы для сбора",
+    inbox_claim_selected="Собрать выбранное",
+    inbox_gathering="Собираем список писем...",
+    inbox_gathered="Готово! Несобранных писем: %s",
+    inbox_claiming="Собираем награды...",
+    inbox_done="Сбор завершен! Собрано: %s",
+})
+__merge("de", {
+    sec_skin_farm_settings="Skin-Farm Einstellungen",
+    sec_inbox="Post & Belohnungen",
+    inbox_refresh="Belohnungsliste aktualisieren",
+    inbox_select_items="Gegenstände zum Abholen wählen",
+    inbox_claim_selected="Ausgewählte abholen",
+    inbox_gathering="Post wird abgerufen...",
+    inbox_gathered="Fertig! Nicht abgeholte Nachrichten: %s",
+    inbox_claiming="Belohnungen werden abgeholt...",
+    inbox_done="Fertig! Abgeholt: %s",
+})
+__merge("fr", {
+    sec_skin_farm_settings="Paramètres Farm de Skins",
+    sec_inbox="Boîte de réception & Récompenses",
+    inbox_refresh="Actualiser la liste",
+    inbox_select_items="Sélectionner les objets à récupérer",
+    inbox_claim_selected="Récupérer la sélection",
+    inbox_gathering="Récupération des messages...",
+    inbox_gathered="Terminé ! Messages non lus : %s",
+    inbox_claiming="Récupération des récompenses...",
+    inbox_done="Terminé ! Récupérés : %s",
+})
+__merge("es", {
+    sec_skin_farm_settings="Ajustes de Farm de Skins",
+    sec_inbox="Bandeja y Recompensas",
+    inbox_refresh="Actualizar lista",
+    inbox_select_items="Seleccionar objetos a reclamar",
+    inbox_claim_selected="Reclamar seleccionados",
+    inbox_gathering="Obteniendo mensajes...",
+    inbox_gathered="¡Listo! Mensajes sin reclamar: %s",
+    inbox_claiming="Reclamando recompensas...",
+    inbox_done="¡Completado! Reclamados: %s",
+})
+__merge("pt", {
+    sec_skin_farm_settings="Config. de Farm de Skins",
+    sec_inbox="Caixa de Entrada e Recompensas",
+    inbox_refresh="Atualizar Lista",
+    inbox_select_items="Selecionar Itens para Resgatar",
+    inbox_claim_selected="Resgatar Selecionados",
+    inbox_gathering="Buscando mensagens...",
+    inbox_gathered="Pronto! Mensagens não resgatadas: %s",
+    inbox_claiming="Resgatando recompensas...",
+    inbox_done="Concluído! Resgatados: %s",
+})
+__merge("tr", {
+    sec_skin_farm_settings="Skin Farm Ayarları",
+    sec_inbox="Gelen Kutusu ve Ödüller",
+    inbox_refresh="Ödül Listesini Yenile",
+    inbox_select_items="Alınacak Eşyaları Seç",
+    inbox_claim_selected="Seçilenleri Al",
+    inbox_gathering="Mesajlar alınıyor...",
+    inbox_gathered="Tamamlandı! Alınmamış mesajlar: %s",
+    inbox_claiming="Ödüller alınıyor...",
+    inbox_done="İşlem tamam! Alınan: %s",
+})
+__merge("ja", {
+    sec_skin_farm_settings="スキンファーム設定",
+    sec_inbox="受信トレイと報酬",
+    inbox_refresh="報酬リストを更新",
+    inbox_select_items="受け取るアイテムを選択",
+    inbox_claim_selected="選択したアイテムを受け取る",
+    inbox_gathering="メッセージを取得中...",
+    inbox_gathered="完了！未受け取りのメッセージ: %s",
+    inbox_claiming="報酬を受け取り中...",
+    inbox_done="受け取り完了！取得数: %s",
+})
+__merge("ko", {
+    sec_skin_farm_settings="스킨 파밍 설정",
+    sec_inbox="우편함 및 보상",
+    inbox_refresh="보상 목록 새로고침",
+    inbox_select_items="받을 아이템 선택",
+    inbox_claim_selected="선택한 아이템 받기",
+    inbox_gathering="메시지 불러오는 중...",
+    inbox_gathered="완료! 미수령 메시지: %s",
+    inbox_claiming="보상 수령 중...",
+    inbox_done="수령 완료! 받은 개수: %s",
+})
+__merge("zh", {
+    sec_skin_farm_settings="皮肤农场设置",
+    sec_inbox="收件箱与奖励",
+    inbox_refresh="刷新奖励列表",
+    inbox_select_items="选择要领取的物品",
+    inbox_claim_selected="领取所选物品",
+    inbox_gathering="正在获取收件箱信息...",
+    inbox_gathered="完成！未领取的邮件: %s",
+    inbox_claiming="正在领取奖励...",
+    inbox_done="领取完成！已领取: %s",
+})
+__merge("ar", {
+    sec_skin_farm_settings="إعدادات زراعة السكن",
+    sec_inbox="البريد والمكافآت",
+    inbox_refresh="تحديث قائمة المكافآت",
+    inbox_select_items="تحديد العناصر للاستلام",
+    inbox_claim_selected="استلام المحدد",
+    inbox_gathering="جاري جلب الرسائل...",
+    inbox_gathered="اكتمل! رسائل غير مستلمة: %s",
+    inbox_claiming="جاري استلام المكافآت...",
+    inbox_done="اكتمل الاستلام! تم استلام: %s",
+})
+__merge("pl", {
+    sec_skin_farm_settings="Ustawienia Farmy Skinów",
+    sec_inbox="Skrzynka Odbiorcza i Nagrody",
+    inbox_refresh="Odśwież listę nagród",
+    inbox_select_items="Wybierz przedmioty do odebrania",
+    inbox_claim_selected="Odbierz zaznaczone",
+    inbox_gathering="Pobieranie wiadomości...",
+    inbox_gathered="Gotowe! Nieodebrane wiadomości: %s",
+    inbox_claiming="Odbieranie nagród...",
+    inbox_done="Zakończono! Odebrano: %s",
+})
