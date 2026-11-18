@@ -2503,3 +2503,26 @@ __merge("pl", {
     inbox_claiming="Odbieranie nagród...",
     inbox_done="Zakończono! Odebrano: %s",
 })
+
+__merge("en", {
+    inbox_busy="The list is already being refreshed. Please wait.",
+    inbox_confirm="Fetch the inbox again? This can take a while if you have many messages.",
+    inbox_auto="Auto Claim Selected Items",
+    inbox_interval="Auto Claim Interval (sec)",
+    inbox_max_hold="Max Held Per Item (0 = no limit)",
+    sec_tear_farm="Dimensional Tears",
+    tear_farm="Auto Farm Dimensional Tears",
+    tear_none="No Dimensional Tear spawner found on this server.",
+    tear_timeout="Tear Timeout (sec)",
+})
+__merge("ru", {
+    inbox_busy="Список уже обновляется. Подождите.",
+    inbox_confirm="Заново загрузить почту? Это может занять время, если писем много.",
+    inbox_auto="Авто-сбор выбранных предметов",
+    inbox_interval="Интервал авто-сбора (сек)",
+    inbox_max_hold="Макс. предметов в инвентаре (0 = без лимита)",
+    sec_tear_farm="Пространственные разрывы",
+    tear_farm="Автофарм Dimensional Tears",
+    tear_none="На этом сервере нет спавнера Dimensional Tears.",
+    tear_timeout="Таймаут разрыва (сек)",
+})
