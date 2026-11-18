@@ -1852,6 +1852,77 @@ local function makeContainer(win, rawC)
         return wrapHandle(raw)
     end
 
+    -- Dropdown text fitting ----------------------------------------------------
+    -- The renderer gives dropdown option rows a fixed 170x16 label and the selected
+    -- value a fixed 168x15 label. A long name ("Anniversary Made in Heaven") wrapped
+    -- onto a second line that was then clipped away. Give both labels real room.
+    local function measureText(lbl, text)
+        local ok, w = pcall(function()
+            local params = Instance.new("GetTextBoundsParams")
+            params.Text = text
+            params.Font = lbl.FontFace
+            params.Size = lbl.TextSize
+            params.Width = 100000
+            return game:GetService("TextService"):GetTextBoundsAsync(params).X
+        end)
+        if ok and type(w) == "number" then return w end
+        return #text * lbl.TextSize * 0.55
+    end
+
+    local function fitOptionRow(o)
+        if type(o) ~= "table" then return end
+        local c, t = o.container, o.title
+        if c and c.Parent and t and t.Parent then
+            c.Size = UDim2_new(1, -28, 0, 16)
+            t.Size = UDim2_new(1, -21, 0, 16)
+        end
+    end
+
+    local function fitDropdown(raw)
+        if type(raw) ~= "table" then return end
+        pcall(function()
+            for _, o in ipairs(raw._optionFrames or {}) do fitOptionRow(o) end
+            local build = raw._buildOption
+            if type(build) == "function" then
+                raw._buildOption = function(...)
+                    local o = build(...)
+                    pcall(fitOptionRow, o)
+                    return o
+                end
+            end
+            local lbl, top, title = raw.selectedLabel, raw.top, raw.title
+            if not (lbl and top and title) then return end
+            local busy, again = false, false
+            local function relayout()
+                if busy then again = true return end
+                busy = true
+                task_spawn(function()
+                    repeat
+                        again = false
+                        pcall(function()
+                            if not lbl.Parent then return end
+                            local avail = top.AbsoluteSize.X - 41 - 20 - title.AbsoluteSize.X - (raw.iconLabel and 21 or 0) - 18
+                            avail = math_max(168, avail)
+                            local want = measureText(lbl, lbl.Text) + 4
+                            if want <= avail then
+                                lbl.TextWrapped = false
+                                lbl.Size = UDim2.fromOffset(math_max(168, math.ceil(want)), 15)
+                            else
+                                lbl.TextWrapped = true
+                                lbl.Size = UDim2.fromOffset(avail, 30)
+                            end
+                        end)
+                    until not again
+                    busy = false
+                end)
+            end
+            win._maid:Add(lbl:GetPropertyChangedSignal("Text"):Connect(relayout))
+            win._maid:Add(top:GetPropertyChangedSignal("AbsoluteSize"):Connect(relayout))
+            win._maid:Add(title:GetPropertyChangedSignal("AbsoluteSize"):Connect(relayout))
+            task_delay(0.2, relayout)
+        end)
+    end
+
     -- Dropdown -----------------------------------------------------------------
     local function buildDropdown(cfg)
         local name = pick(cfg, "Name", "name") or "Dropdown"
@@ -1924,6 +1995,7 @@ local function makeContainer(win, rawC)
             end,
         })
         register(raw, name, cfg, initLabel)
+        fitDropdown(raw)
 
         local extras = {}
 
@@ -2440,7 +2512,8 @@ function Nexus:CreateWindow(config)
     if premium.LoadModule then win._loader = premium.LoadModule end
     win:_updateTag()
 
-    -- Truncation fixer: any label whose text does not fit gets wrapped instead of cut.
+    -- Text fixer: any label whose text is cut off, either shown with "..." or
+    -- wrapped onto a line that does not fit, is expanded so the full text is visible.
     if config.FixTruncation ~= false then
         task_spawn(function()
             local gui
@@ -2452,29 +2525,55 @@ function Nexus:CreateWindow(config)
             if not gui then return end
             local TextService = game:GetService("TextService")
             local pending, queued = {}, false
-            local function fixLabel(l)
-                if not l.Parent or l:GetAttribute("NxFixed") then return end
-                if l.Text == "" or l.AbsoluteSize.X < 8 then return end
-                if l.TextTruncate == Enum.TextTruncate.None and l.TextWrapped then return end
-                local ok, sz = pcall(function()
-                    return TextService:GetTextSize(l.Text, l.TextSize, l.Font, Vector2.new(100000, 100000))
-                end)
-                if not ok or sz.X <= l.AbsoluteSize.X + 1 then return end
-                l:SetAttribute("NxFixed", true)
-                l.TextTruncate = Enum.TextTruncate.None
-                l.TextWrapped = true
-                if l.AutomaticSize == Enum.AutomaticSize.None and l.Size.Y.Scale == 0 then
-                    l.AutomaticSize = Enum.AutomaticSize.Y
-                end
+
+            local function growParents(l, need)
                 local p = l.Parent
                 for _ = 1, 3 do
                     if not p or not p:IsA("GuiObject") or p:IsA("ScrollingFrame") then break end
-                    if p.AutomaticSize == Enum.AutomaticSize.None and p.Size.Y.Scale == 0 then
-                        p.AutomaticSize = Enum.AutomaticSize.Y
-                    end
+                    if p.AbsoluteSize.Y + 1 >= need then break end
+                    if p.AutomaticSize ~= Enum.AutomaticSize.None or p.Size.Y.Scale ~= 0 then break end
+                    p.Size = UDim2_new(p.Size.X.Scale, p.Size.X.Offset, 0, need)
+                    need = need + 8
                     p = p.Parent
                 end
             end
+
+            local function fixLabel(l)
+                if not l.Parent then return end
+                local text = l.Text
+                if text == "" then return end
+                local abs = l.AbsoluteSize
+                if abs.X < 8 then return end
+                if l.TextTruncate ~= Enum.TextTruncate.None then
+                    -- Shown with "...": measure the real single line width.
+                    if l.TextBounds.X < abs.X - 2 then return end
+                    local ok, w = pcall(function()
+                        local params = Instance.new("GetTextBoundsParams")
+                        params.Text = text
+                        params.Font = l.FontFace
+                        params.Size = l.TextSize
+                        params.Width = 100000
+                        return TextService:GetTextBoundsAsync(params).X
+                    end)
+                    if not ok or w <= abs.X + 1 then return end
+                    l.TextTruncate = Enum.TextTruncate.None
+                    l.TextWrapped = true
+                    if l.AutomaticSize == Enum.AutomaticSize.None and l.Size.Y.Scale == 0 then
+                        l.AutomaticSize = Enum.AutomaticSize.Y
+                    end
+                    growParents(l, abs.Y * 2 + 6)
+                elseif l.TextWrapped and l.Size.Y.Scale == 0
+                    and l.AutomaticSize ~= Enum.AutomaticSize.Y and l.AutomaticSize ~= Enum.AutomaticSize.XY then
+                    -- Wrapped text taller than its label: the extra lines were clipped.
+                    local h = l.TextBounds.Y
+                    if h > abs.Y + 1 then
+                        local need = math.ceil(h)
+                        l.Size = UDim2_new(l.Size.X.Scale, l.Size.X.Offset, 0, need)
+                        growParents(l, need + 6)
+                    end
+                end
+            end
+
             local function flush()
                 queued = false
                 local batch = pending
@@ -2487,6 +2586,10 @@ function Nexus:CreateWindow(config)
                     if not queued then
                         queued = true
                         task_delay(0.15, flush)
+                    end
+                    if not d:GetAttribute("NxWatch") then
+                        d:SetAttribute("NxWatch", true)
+                        d:GetPropertyChangedSignal("Text"):Connect(function() consider(d) end)
                     end
                 end
             end
